@@ -1,9 +1,10 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+import uuid
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 
 class CustomUserManager(BaseUserManager):
-    """Email-based user manager — username is not used."""
+    """Email-based user manager."""
 
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -21,13 +22,16 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-import uuid
+class CustomUser(AbstractBaseUser):
+    """
+    Custom user model mapped EXACTLY to the native PostgreSQL `users` table.
 
-class CustomUser(AbstractUser):
-    username = None  # remove username field
+    Native columns:
+      user_id UUID, name VARCHAR(100), email VARCHAR(150), password_hash TEXT,
+      role user_role, is_active BOOL, is_staff BOOL, is_superuser BOOL,
+      created_at TIMESTAMP, last_login TIMESTAMP
+    """
 
-    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
     FLEET_MANAGER = 'manager'
     DISPATCHER = 'dispatcher'
     SAFETY_OFFICER = 'safety_officer'
@@ -40,19 +44,30 @@ class CustomUser(AbstractUser):
         (FINANCIAL_ANALYST, 'Financial Analyst'),
     ]
 
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128, db_column='password_hash')  # Map to native schema column
+    # --- Primary key ---
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # --- Core columns (mapped to native names) ---
     full_name = models.CharField(max_length=100, blank=True, default='', db_column='name')
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=128, db_column='password_hash')
+
+    # --- Role & Status ---
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=FLEET_MANAGER)
-    profile_image = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    
+
+    # --- Timestamps ---
     date_joined = models.DateTimeField(auto_now_add=True, db_column='created_at')
-    
+    # last_login is managed by AbstractBaseUser automatically
+
+    # --- Extra profile fields ---
+    # These columns exist in the users table ONLY if a migration has added them.
+    # If they don't exist in DB yet, remove them from here and add via migration.
+    phone = models.CharField(max_length=20, blank=True, null=True, default=None)
+    profile_image = models.CharField(max_length=255, blank=True, null=True, default=None)  # store path as text
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -63,3 +78,9 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    def has_perm(self, perm, obj=None):
+        return self.is_superuser
+
+    def has_module_perms(self, app_label):
+        return self.is_superuser
