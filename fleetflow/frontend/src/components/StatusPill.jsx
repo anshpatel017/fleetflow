@@ -1,5 +1,6 @@
 const STATUS_CONFIG = {
     // Trip statuses
+    draft: { label: 'Draft', bg: 'rgba(28,28,30,0.08)', text: '#6B7280', dot: '#6B7280' },
     dispatched: { label: 'Dispatched', bg: 'rgba(59,159,212,0.15)', text: '#3B9FD4', dot: '#3B9FD4' },
     on_way: { label: 'On Way', bg: 'rgba(212,80,10,0.15)', text: '#D4500A', dot: '#D4500A' },
     completed: { label: 'Completed', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
@@ -7,9 +8,13 @@ const STATUS_CONFIG = {
 
     // Vehicle statuses
     available: { label: 'Available', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
-    on_trip: { label: 'On Trip', bg: 'rgba(59,159,212,0.15)', text: '#3B9FD4', dot: '#3B9FD4' },
-    in_shop: { label: 'In Shop', bg: 'rgba(212,80,10,0.15)', text: '#D4500A', dot: '#D4500A' },
+    on_trip: { label: 'On Trip', bg: 'rgba(212,80,10,0.15)', text: '#D4500A', dot: '#D4500A' },
+    in_shop: { label: 'In Shop', bg: 'rgba(234,179,8,0.15)', text: '#CA8A04', dot: '#CA8A04' },
     out_of_service: { label: 'Out of Service', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
+
+    // Maintenance statuses
+    open: { label: 'Open', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
+    resolved: { label: 'Resolved', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
 
     // Driver statuses
     on_duty: { label: 'On Duty', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },

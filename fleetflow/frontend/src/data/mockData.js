@@ -1,16 +1,13 @@
 // ── Mock Data for FleetFlow Dashboard ──
 
 export const mockVehicles = [
-    { id: 1, licensePlate: 'TRK-001', model: 'Volvo FH16', type: 'Truck', capacity: 25000, status: 'available', odometer: 145200, acquisitionCost: 85000 },
-    { id: 2, licensePlate: 'TRK-002', model: 'Scania R450', type: 'Truck', capacity: 22000, status: 'on_trip', odometer: 98700, acquisitionCost: 78000 },
-    { id: 3, licensePlate: 'VAN-003', model: 'Mercedes Sprinter', type: 'Van', capacity: 3500, status: 'available', odometer: 67300, acquisitionCost: 42000 },
-    { id: 4, licensePlate: 'TRK-004', model: 'MAN TGX', type: 'Truck', capacity: 28000, status: 'in_shop', odometer: 210400, acquisitionCost: 92000 },
-    { id: 5, licensePlate: 'PKP-005', model: 'Ford F-150', type: 'Pickup', capacity: 1200, status: 'available', odometer: 34500, acquisitionCost: 35000 },
-    { id: 6, licensePlate: 'TRK-006', model: 'DAF XF', type: 'Truck', capacity: 24000, status: 'on_trip', odometer: 178900, acquisitionCost: 88000 },
-    { id: 7, licensePlate: 'VAN-007', model: 'Iveco Daily', type: 'Van', capacity: 4000, status: 'available', odometer: 52100, acquisitionCost: 38000 },
-    { id: 8, licensePlate: 'TRK-008', model: 'Kenworth T680', type: 'Truck', capacity: 30000, status: 'available', odometer: 125600, acquisitionCost: 95000 },
-    { id: 9, licensePlate: 'TRK-009', model: 'Peterbilt 579', type: 'Truck', capacity: 27000, status: 'out_of_service', odometer: 285000, acquisitionCost: 82000 },
-    { id: 10, licensePlate: 'VAN-010', model: 'Renault Master', type: 'Van', capacity: 3800, status: 'on_trip', odometer: 71400, acquisitionCost: 40000 },
+    { id: 1, plate: 'GH-1234-22', model: 'Isuzu NQR', type: 'Truck', capacity: 5000, status: 'available', odometer: 45200 },
+    { id: 2, plate: 'GH-5678-21', model: 'Toyota Hilux', type: 'Pickup', capacity: 1200, status: 'on_trip', odometer: 89300 },
+    { id: 3, plate: 'GH-9012-23', model: 'Mercedes Sprinter', type: 'Van', capacity: 2000, status: 'in_shop', odometer: 23100 },
+    { id: 4, plate: 'GH-3456-20', model: 'MAN TGX', type: 'Truck', capacity: 8000, status: 'available', odometer: 112400 },
+    { id: 5, plate: 'GH-7890-22', model: 'Ford Transit', type: 'Van', capacity: 1800, status: 'on_trip', odometer: 67500 },
+    { id: 6, plate: 'GH-2345-21', model: 'Volvo FH16', type: 'Truck', capacity: 12000, status: 'out_of_service', odometer: 198700 },
+    { id: 7, plate: 'GH-6789-23', model: 'Mitsubishi Canter', type: 'Truck', capacity: 3500, status: 'available', odometer: 31800 },
 ];
 
 export const mockDrivers = [
@@ -26,19 +23,28 @@ export const mockDrivers = [
 ];
 
 export const mockTrips = [
-    { id: 'TRP-001', vehicleId: 2, vehicle: 'TRK-002', driverId: 1, driver: 'James Okonkwo', cargo: 18500, origin: 'Accra Warehouse', destination: 'Kumasi Depot', status: 'dispatched', fuelEst: 925, date: '2026-02-21' },
-    { id: 'TRP-002', vehicleId: 6, vehicle: 'TRK-006', driverId: 5, driver: 'Kwame Asante', cargo: 21000, origin: 'Tema Port', destination: 'Tamale Hub', status: 'on_way', fuelEst: 1050, date: '2026-02-20' },
-    { id: 'TRP-003', vehicleId: 10, vehicle: 'VAN-010', driverId: 2, driver: 'Amina Traore', cargo: 2800, origin: 'Accra Central', destination: 'Cape Coast', status: 'on_way', fuelEst: 140, date: '2026-02-20' },
-    { id: 'TRP-004', vehicleId: 1, vehicle: 'TRK-001', driverId: 6, driver: 'Grace Adebayo', cargo: 15000, origin: 'Kumasi Depot', destination: 'Sunyani Market', status: 'completed', fuelEst: 750, date: '2026-02-19' },
-    { id: 'TRP-005', vehicleId: 3, vehicle: 'VAN-003', driverId: 8, driver: 'Leila Bah', cargo: 3200, origin: 'Accra Warehouse', destination: 'Tema Port', status: 'completed', fuelEst: 160, date: '2026-02-18' },
-    { id: 'TRP-006', vehicleId: 7, vehicle: 'VAN-007', driverId: 4, driver: 'Fatima Diallo', cargo: 3500, origin: 'Takoradi', destination: 'Accra Central', status: 'cancelled', fuelEst: 175, date: '2026-02-17' },
-    { id: 'TRP-007', vehicleId: 8, vehicle: 'TRK-008', driverId: 9, driver: 'David Owusu', cargo: 26000, origin: 'Tema Port', destination: 'Ouagadougou', status: 'completed', fuelEst: 1300, date: '2026-02-16' },
+    { id: 'TRP-001', vehicleId: 1, vehicle: 'GH-1234-22', driverId: 5, driver: 'Kwame Asante', cargo: 3200, origin: 'Accra', destination: 'Kumasi', status: 'on_way', fuelEst: 160, date: '2026-02-21', notes: 'Priority delivery — perishable goods' },
+    { id: 'TRP-002', vehicleId: 2, vehicle: 'GH-5678-21', driverId: 1, driver: 'James Okonkwo', cargo: 950, origin: 'Tema Port', destination: 'Tamale Hub', status: 'dispatched', fuelEst: 47.5, date: '2026-02-20', notes: '' },
+    { id: 'TRP-003', vehicleId: 4, vehicle: 'GH-3456-20', driverId: 2, driver: 'Amina Traore', cargo: 6800, origin: 'Accra Central', destination: 'Cape Coast', status: 'on_way', fuelEst: 340, date: '2026-02-20', notes: 'Construction materials' },
+    { id: 'TRP-004', vehicleId: 7, vehicle: 'GH-6789-23', driverId: 6, driver: 'Grace Adebayo', cargo: 2400, origin: 'Kumasi Depot', destination: 'Sunyani Market', status: 'completed', fuelEst: 120, date: '2026-02-19', notes: '' },
+    { id: 'TRP-005', vehicleId: 1, vehicle: 'GH-1234-22', driverId: 8, driver: 'Leila Bah', cargo: 4100, origin: 'Accra Warehouse', destination: 'Tema Port', status: 'completed', fuelEst: 205, date: '2026-02-18', notes: '' },
+    { id: 'TRP-006', vehicleId: 4, vehicle: 'GH-3456-20', driverId: 3, driver: 'John Mensah', cargo: 3500, origin: 'Takoradi', destination: 'Accra Central', status: 'cancelled', fuelEst: 175, date: '2026-02-17', notes: 'Cancelled due to road closure' },
+    { id: 'TRP-007', vehicleId: 7, vehicle: 'GH-6789-23', driverId: 5, driver: 'Kwame Asante', cargo: 2900, origin: 'Tema Port', destination: 'Ho', status: 'draft', fuelEst: 145, date: '2026-02-21', notes: 'Pending approval' },
+];
+
+export const mockExpenses = [
+    { id: 1, tripId: 'TRP-001', driver: 'Kwame Asante', vehicle: 'GH-1234-22', fuelL: 80, fuelCost: 160, misc: 25, date: '2026-02-21', status: 'completed' },
+    { id: 2, tripId: 'TRP-004', driver: 'Grace Adebayo', vehicle: 'GH-6789-23', fuelL: 55, fuelCost: 120, misc: 0, date: '2026-02-19', status: 'completed' },
+    { id: 3, tripId: 'TRP-005', driver: 'Leila Bah', vehicle: 'GH-1234-22', fuelL: 95, fuelCost: 205, misc: 40, date: '2026-02-18', status: 'completed' },
+    { id: 4, tripId: 'TRP-003', driver: 'Amina Traore', vehicle: 'GH-3456-20', fuelL: 150, fuelCost: 340, misc: 60, date: '2026-02-20', status: 'on_way' },
+    { id: 5, tripId: 'TRP-002', driver: 'James Okonkwo', vehicle: 'GH-5678-21', fuelL: 22, fuelCost: 47.5, misc: 15, date: '2026-02-20', status: 'dispatched' },
+    { id: 6, tripId: 'TRP-006', driver: 'John Mensah', vehicle: 'GH-3456-20', fuelL: 0, fuelCost: 0, misc: 30, date: '2026-02-17', status: 'cancelled' },
 ];
 
 export const mockAlerts = [
     { id: 1, type: 'danger', icon: '🔴', message: 'Vehicle TRK-009 license expires in 3 days', time: '2 hours ago' },
     { id: 2, type: 'warning', icon: '🟡', message: 'Driver John Mensah safety score below threshold (54/100)', time: '5 hours ago' },
-    { id: 3, type: 'info', icon: '🔵', message: 'Scheduled maintenance for TRK-004 starts tomorrow', time: '1 day ago' },
+    { id: 3, type: 'info', icon: '🔵', message: '3 maintenance logs pending resolution', time: '1 day ago' },
 ];
 
 export const fuelCostData = [
@@ -73,4 +79,13 @@ export const topExpensiveTrips = [
     { id: 'TRP-001', vehicle: 'TRK-002', driver: 'James Okonkwo', route: 'Accra → Kumasi Depot', totalCost: 1800, fuelCost: 925, distance: 270 },
     { id: 'TRP-004', vehicle: 'TRK-001', driver: 'Grace Adebayo', route: 'Kumasi → Sunyani Market', totalCost: 1500, fuelCost: 750, distance: 130 },
     { id: 'TRP-006', vehicle: 'VAN-007', driver: 'Fatima Diallo', route: 'Takoradi → Accra Central', totalCost: 980, fuelCost: 175, distance: 230 },
+];
+
+export const mockMaintenanceLogs = [
+    { id: 1, vehicle: 'GH-9012-23', issue: 'Engine overhaul', date: '2025-01-15', cost: 3200, status: 'in_shop' },
+    { id: 2, vehicle: 'GH-1234-22', issue: 'Tyre replacement', date: '2025-01-10', cost: 480, status: 'resolved' },
+    { id: 3, vehicle: 'GH-5678-21', issue: 'Brake pad replacement', date: '2025-02-01', cost: 620, status: 'open' },
+    { id: 4, vehicle: 'GH-3456-20', issue: 'Oil change & filter', date: '2025-02-05', cost: 150, status: 'resolved' },
+    { id: 5, vehicle: 'GH-7890-22', issue: 'Transmission repair', date: '2025-02-12', cost: 2800, status: 'in_shop' },
+    { id: 6, vehicle: 'GH-2345-21', issue: 'Electrical system diagnostics', date: '2025-02-18', cost: 950, status: 'open' },
 ];

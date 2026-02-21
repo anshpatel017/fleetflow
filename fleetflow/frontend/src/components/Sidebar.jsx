@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
@@ -6,7 +5,10 @@ const navItems = [
     { path: '/vehicles', label: 'Vehicles', icon: '🚛' },
     { path: '/trips', label: 'Trips', icon: '🗺️' },
     { path: '/drivers', label: 'Drivers', icon: '👤' },
+    { path: '/maintenance', label: 'Maintenance', icon: '🔧' },
+    { path: '/expenses', label: 'Expenses', icon: '💰' },
     { path: '/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 export default function Sidebar({ isOpen, onToggle }) {
@@ -42,7 +44,7 @@ export default function Sidebar({ isOpen, onToggle }) {
                 </div>
 
                 {/* Navigation */}
-                <nav className="px-3 py-4 flex flex-col gap-1">
+                <nav className="px-3 py-4 flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 140px)' }}>
                     <span className="text-[10px] font-bold tracking-widest uppercase px-3 mb-2"
                         style={{ color: 'rgba(244,242,238,0.25)' }}>
                         Main Menu
@@ -54,9 +56,9 @@ export default function Sidebar({ isOpen, onToggle }) {
                             <Link key={item.path} to={item.path}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-all duration-200 group"
                                 style={{
-                                    background: active ? 'rgba(59,159,212,0.1)' : 'transparent',
-                                    borderLeft: active ? '3px solid #3B9FD4' : '3px solid transparent',
-                                    color: active ? '#3B9FD4' : 'rgba(244,242,238,0.5)',
+                                    background: active ? 'rgba(212,80,10,0.08)' : 'transparent',
+                                    borderLeft: active ? '3px solid #D4500A' : '3px solid transparent',
+                                    color: active ? '#F4F2EE' : 'rgba(244,242,238,0.5)',
                                 }}
                                 onClick={() => { if (window.innerWidth < 1024) onToggle(); }}>
                                 <span className="text-lg">{item.icon}</span>

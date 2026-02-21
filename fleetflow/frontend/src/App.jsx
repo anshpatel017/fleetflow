@@ -9,7 +9,10 @@ import DashboardPage from './pages/DashboardPage';
 import VehiclesPage from './pages/VehiclesPage';
 import TripsPage from './pages/TripsPage';
 import DriversPage from './pages/DriversPage';
+import MaintenancePage from './pages/MaintenancePage';
+import ExpensesPage from './pages/ExpensesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
@@ -32,7 +35,10 @@ export default function App() {
           <Route path="/vehicles" element={<VehiclesPage />} />
           <Route path="/trips" element={<TripsPage />} />
           <Route path="/drivers" element={<DriversPage />} />
+          <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 

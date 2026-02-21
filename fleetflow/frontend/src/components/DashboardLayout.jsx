@@ -7,7 +7,10 @@ const pageTitles = {
     '/vehicles': 'Vehicle Registry',
     '/trips': 'Trip Dispatcher',
     '/drivers': 'Driver Profiles',
+    '/maintenance': 'Maintenance Logs',
+    '/expenses': 'Fuel & Expenses',
     '/analytics': 'Financial Analytics',
+    '/settings': 'Settings',
 };
 
 export default function DashboardLayout() {
@@ -15,6 +18,7 @@ export default function DashboardLayout() {
     const location = useLocation();
     const pageTitle = pageTitles[location.pathname] || 'Dashboard';
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const notificationCount = 3;
 
     return (
         <div className="min-h-screen" style={{ background: '#F4F2EE' }}>
@@ -41,14 +45,18 @@ export default function DashboardLayout() {
 
                     {/* Right: notification + user */}
                     <div className="flex items-center gap-4">
-                        {/* Notification bell */}
+                        {/* Notification bell with badge count */}
                         <button className="relative w-9 h-9 rounded-lg flex items-center justify-center cursor-pointer transition-colors bg-transparent border-none"
                             style={{ color: '#1C1C1E' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(28,28,30,0.06)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                             <span className="text-lg">🔔</span>
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                                style={{ background: '#D4500A', boxShadow: '0 0 0 2px #F4F2EE' }} />
+                            {notificationCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1"
+                                    style={{ background: '#D4500A', boxShadow: '0 0 0 2px #F4F2EE' }}>
+                                    {notificationCount}
+                                </span>
+                            )}
                         </button>
 
                         {/* User */}

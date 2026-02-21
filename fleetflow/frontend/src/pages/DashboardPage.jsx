@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import KPICard from '../components/KPICard';
 import StatusPill from '../components/StatusPill';
-import { mockTrips, mockAlerts, fuelCostData, mockVehicles, mockDrivers } from '../data/mockData';
+import { mockTrips, mockAlerts, fuelCostData } from '../data/mockData';
 
 const kpis = [
     {
@@ -52,18 +54,7 @@ export default function DashboardPage() {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {kpis.map((kpi, i) => (
-                    <div key={i} className="rounded-2xl p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                        style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                        <div className="flex items-start justify-between mb-3">
-                            <span className="text-2xl">{kpi.icon}</span>
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                style={{ background: `${kpi.color}15`, color: kpi.color }}>
-                                {kpi.change}
-                            </span>
-                        </div>
-                        <p className="text-3xl font-black tracking-tight" style={{ color: kpi.color }}>{kpi.value}</p>
-                        <p className="text-xs font-medium mt-1" style={{ color: 'rgba(28,28,30,0.45)' }}>{kpi.label}</p>
-                    </div>
+                    <KPICard key={i} title={kpi.label} value={kpi.value} icon={kpi.icon} color={kpi.color} change={kpi.change} />
                 ))}
             </div>
 
@@ -154,6 +145,20 @@ export default function DashboardPage() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+                <Link to="/trips"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white no-underline transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
+                    <span className="text-base">+</span> New Trip
+                </Link>
+                <Link to="/vehicles"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white no-underline transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
+                    <span className="text-base">+</span> Add Vehicle
+                </Link>
             </div>
         </div>
     );
