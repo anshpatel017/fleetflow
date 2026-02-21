@@ -20,6 +20,7 @@ export default function SignupPage() {
                 email: data.email,
                 full_name: data.full_name,
                 phone: data.phone || '',
+                role: data.role,
                 password: data.password,
                 password2: data.password2,
             });
@@ -83,12 +84,22 @@ export default function SignupPage() {
                             </div>
 
                             <div>
-                                <label className="input-label">
-                                    Phone{' '}
-                                    <span style={{ fontWeight: 400, color: '#a8a29e' }}>(optional)</span>
-                                </label>
+                                <label className="input-label">Phone{' '}<span style={{ fontWeight: 400, color: '#a8a29e' }}>(optional)</span></label>
                                 <input type="tel" placeholder="+91 98765 43210" className="input-field"
                                     {...register('phone')} />
+                            </div>
+
+                            <div>
+                                <label className="input-label">Role</label>
+                                <select className="input-field" style={{ cursor: 'pointer' }}
+                                    {...register('role', { required: 'Please select a role' })}>
+                                    <option value="">Select your role…</option>
+                                    <option value="manager">Fleet Manager</option>
+                                    <option value="dispatcher">Dispatcher</option>
+                                    <option value="safety_officer">Safety Officer</option>
+                                    <option value="analyst">Financial Analyst</option>
+                                </select>
+                                {errors.role && <p className="error-text">{errors.role.message}</p>}
                             </div>
 
                             <div>

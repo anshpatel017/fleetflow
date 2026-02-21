@@ -10,7 +10,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'full_name', 'phone', 'password', 'password2')
+        fields = ('email', 'full_name', 'phone', 'role', 'password', 'password2')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -24,6 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             full_name=validated_data.get('full_name', ''),
             phone=validated_data.get('phone', ''),
+            role=validated_data.get('role', CustomUser.FLEET_MANAGER),
         )
         return user
 
