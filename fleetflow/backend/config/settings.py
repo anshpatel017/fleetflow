@@ -29,6 +29,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts',
+    'fleet',
+    'drivers',
+    'trips',
+    'operations',
+    'analytics',
 ]
 
 MIDDLEWARE = [
@@ -66,9 +71,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'auth_system'),
-        'USER': os.getenv('DB_USER', 'auth_user'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'strongpassword'),
+        'NAME': os.getenv('DB_NAME', 'fleetflow'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'root'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
