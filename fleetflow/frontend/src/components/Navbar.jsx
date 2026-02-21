@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
@@ -5,18 +6,9 @@ export default function Navbar() {
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     const isAuth = !!localStorage.getItem('access_token');
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const isActive = (path) => location.pathname === path;
-
-    const linkStyle = (path) => ({
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        color: isActive(path) ? '#1c1917' : '#78716c',
-        textDecoration: 'none',
-        transition: 'color 0.15s',
-        paddingBottom: '2px',
-        borderBottom: isActive(path) ? '1.5px solid #1c1917' : '1.5px solid transparent',
-    });
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -26,61 +18,114 @@ export default function Navbar() {
     };
 
     return (
-        <header style={{ background: '#ffffff', borderBottom: '1px solid #e7e5e4', position: 'sticky', top: 0, zIndex: 50 }}>
-            <nav style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+            style={{ background: 'rgba(28,28,30,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(244,242,238,0.06)' }}>
+            <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
                 {/* Logo */}
-                <Link to="/" style={{ fontWeight: 800, fontSize: '1rem', color: '#1c1917', textDecoration: 'none', letterSpacing: '-0.02em' }}>
-                    HackStart
+                <Link to="/" className="flex items-center gap-2 no-underline group">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm"
+                        style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
+                        FF
+                    </div>
+                    <span className="font-extrabold text-lg tracking-tight" style={{ color: '#3B9FD4' }}>
+                        FleetFlow
+                    </span>
                 </Link>
 
-                {/* Links */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-                    <Link to="/" style={linkStyle('/')}>Home</Link>
-
-                    {isAuth ? (
+                {/* Desktop Links */}
+                <div className="hidden md:flex items-center gap-8">
+                    {!isAuth && (
                         <>
-                            <Link to="/dashboard" style={linkStyle('/dashboard')}>Dashboard</Link>
-                            <Link to="/profile" style={linkStyle('/profile')}>
-                                {user?.full_name?.split(' ')[0] || 'Profile'}
-                            </Link>
-                            <button onClick={handleLogout} style={{
-                                padding: '6px 14px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 600,
-                                background: 'transparent',
-                                border: '1.5px solid #e7e5e4',
-                                borderRadius: 7,
-                                color: '#78716c',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s',
-                                fontFamily: 'inherit',
-                            }}
-                                onMouseEnter={e => { e.target.style.borderColor = '#dc2626'; e.target.style.color = '#dc2626'; }}
-                                onMouseLeave={e => { e.target.style.borderColor = '#e7e5e4'; e.target.style.color = '#78716c'; }}
-                            >
-                                Sign out
-                            </button>
+                            <a href="#features"
+                                className="text-sm font-medium no-underline transition-colors duration-200 hover:!text-white"
+                                style={{ color: 'rgba(244,242,238,0.6)' }}>
+                                Features
+                            </a>
+                            <a href="#about"
+                                className="text-sm font-medium no-underline transition-colors duration-200 hover:!text-white"
+                                style={{ color: 'rgba(244,242,238,0.6)' }}>
+                                About
+                            </a>
                         </>
-                    ) : (
+                    )}
+                    {isAuth && (
                         <>
-                            <Link to="/login" style={linkStyle('/login')}>Login</Link>
-                            <Link to="/signup" style={{
-                                padding: '6px 14px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 600,
-                                background: '#1c1917',
-                                color: '#ffffff',
-                                borderRadius: 7,
-                                textDecoration: 'none',
-                                transition: 'background 0.15s',
-                            }}>
-                                Sign up
+                            <Link to="/dashboard"
+                                className="text-sm font-medium no-underline transition-colors duration-200"
+                                style={{ color: isActive('/dashboard') ? '#3B9FD4' : 'rgba(244,242,238,0.6)' }}>
+                                Dashboard
+                            </Link>
+                            <Link to="/profile"
+                                className="text-sm font-medium no-underline transition-colors duration-200"
+                                style={{ color: isActive('/profile') ? '#3B9FD4' : 'rgba(244,242,238,0.6)' }}>
+                                {user?.full_name?.split(' ')[0] || 'Profile'}
                             </Link>
                         </>
                     )}
                 </div>
+
+                {/* Auth buttons */}
+                <div className="hidden md:flex items-center gap-3">
+                    {isAuth ? (
+                        <button onClick={handleLogout}
+                            className="px-4 py-2 text-sm font-semibold rounded-lg cursor-pointer transition-all duration-200 hover:scale-105"
+                            style={{ background: 'transparent', border: '1.5px solid rgba(212,80,10,0.5)', color: '#D4500A' }}>
+                            Sign Out
+                        </button>
+                    ) : (
+                        <>
+                            <Link to="/login"
+                                className="px-4 py-2 text-sm font-semibold rounded-lg no-underline transition-all duration-200"
+                                style={{ color: '#3B9FD4', border: '1.5px solid rgba(59,159,212,0.3)', background: 'transparent' }}>
+                                Log In
+                            </Link>
+                            <Link to="/signup"
+                                className="px-5 py-2 text-sm font-semibold rounded-lg no-underline text-white transition-all duration-200 hover:scale-105"
+                                style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
+                                Get Started
+                            </Link>
+                        </>
+                    )}
+                </div>
+
+                {/* Mobile hamburger */}
+                <button onClick={() => setMobileOpen(!mobileOpen)}
+                    className="md:hidden flex flex-col gap-1.5 cursor-pointer bg-transparent border-none p-2">
+                    <span className="w-5 h-0.5 rounded transition-all" style={{ background: '#F4F2EE' }} />
+                    <span className="w-5 h-0.5 rounded transition-all" style={{ background: '#F4F2EE' }} />
+                    <span className="w-3.5 h-0.5 rounded transition-all" style={{ background: '#F4F2EE' }} />
+                </button>
             </nav>
+
+            {/* Mobile menu */}
+            {mobileOpen && (
+                <div className="md:hidden px-6 pb-6 fade-in" style={{ background: 'rgba(28,28,30,0.98)' }}>
+                    <div className="flex flex-col gap-4 pt-4">
+                        {!isAuth && (
+                            <>
+                                <a href="#features" className="text-sm font-medium no-underline" style={{ color: 'rgba(244,242,238,0.7)' }}>Features</a>
+                                <a href="#about" className="text-sm font-medium no-underline" style={{ color: 'rgba(244,242,238,0.7)' }}>About</a>
+                                <Link to="/login" className="text-sm font-medium no-underline" style={{ color: '#3B9FD4' }}>Log In</Link>
+                                <Link to="/signup" className="text-sm font-semibold no-underline text-white px-4 py-2.5 rounded-lg text-center"
+                                    style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
+                        {isAuth && (
+                            <>
+                                <Link to="/dashboard" className="text-sm font-medium no-underline" style={{ color: 'rgba(244,242,238,0.7)' }}>Dashboard</Link>
+                                <Link to="/profile" className="text-sm font-medium no-underline" style={{ color: 'rgba(244,242,238,0.7)' }}>Profile</Link>
+                                <button onClick={handleLogout} className="text-sm font-semibold px-4 py-2.5 rounded-lg cursor-pointer"
+                                    style={{ background: 'transparent', border: '1.5px solid rgba(212,80,10,0.5)', color: '#D4500A' }}>
+                                    Sign Out
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </header>
     );
 }

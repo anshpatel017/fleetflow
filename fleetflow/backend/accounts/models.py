@@ -22,12 +22,20 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('manager', 'Manager'),
+        ('dispatcher', 'Dispatcher'),
+        ('safety_officer', 'Safety Officer'),
+        ('finance', 'Finance'),
+    )
+
     username = None  # remove username field
 
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150, blank=True, default='')
     phone = models.CharField(max_length=15, blank=True, null=True)
     profile_image = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='manager')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

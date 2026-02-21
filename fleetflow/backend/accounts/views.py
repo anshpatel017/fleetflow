@@ -29,6 +29,7 @@ class RegisterView(APIView):
                     "id": user.id,
                     "email": user.email,
                     "full_name": user.full_name,
+                    "role": user.role,
                 }
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -51,6 +52,7 @@ class LoginView(APIView):
                     "id": user.id,
                     "email": user.email,
                     "full_name": user.full_name,
+                    "role": user.role,
                 }
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
