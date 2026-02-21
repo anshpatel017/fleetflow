@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
     open: { label: 'Open', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
     resolved: { label: 'Resolved', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
 
-    // Driver statuses
+    // Driver statuses (on_trip reused from vehicle statuses above)
     on_duty: { label: 'On Duty', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
     off_duty: { label: 'Off Duty', bg: 'rgba(244,242,238,0.1)', text: 'rgba(244,242,238,0.5)', dot: 'rgba(244,242,238,0.3)' },
     suspended: { label: 'Suspended', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
