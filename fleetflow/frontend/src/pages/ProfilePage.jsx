@@ -181,6 +181,7 @@ export default function ProfilePage() {
                                         { label: 'Full Name', value: profile?.full_name || '—' },
                                         { label: 'Email', value: profile?.email },
                                         { label: 'Phone', value: profile?.phone || '—' },
+                                        { label: 'Role', value: profile?.role ? profile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '—' },
                                     ].map(({ label, value }, i, arr) => (
                                         <div key={label} style={{
                                             display: 'flex', justifyContent: 'space-between', padding: '14px 0',
