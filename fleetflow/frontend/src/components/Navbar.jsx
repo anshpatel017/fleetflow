@@ -30,8 +30,8 @@ export default function Navbar() {
             <nav style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
                 {/* Logo */}
-                <Link to="/" style={{ fontWeight: 800, fontSize: '1rem', color: '#1c1917', textDecoration: 'none', letterSpacing: '-0.02em' }}>
-                    HackStart
+                <Link to="/dashboard" style={{ fontWeight: 800, fontSize: '1rem', color: '#1c1917', textDecoration: 'none', letterSpacing: '-0.02em' }}>
+                    FleetFlow
                 </Link>
 
                 {/* Links */}
