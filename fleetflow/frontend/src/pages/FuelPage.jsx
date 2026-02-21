@@ -1,264 +1,188 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/axios';
-import { Plus, Fuel, Droplet, DollarSign, BarChart2, MapPin, Edit2, Trash2, X } from 'lucide-react';
-import toast from 'react-hot-toast';
-
-const EMPTY_FORM = {
-    vehicle: '', trip: '', date: '', liters: '',
-    cost_per_liter: '', total_cost: '', odometer_at_fill: '', station_name: '',
-};
-
-function FuelModal({ open, onClose, initial, vehicles, trips }) {
-    const queryClient = useQueryClient();
-    const isEdit = !!initial;
-    const [form, setForm] = useState(initial ?? EMPTY_FORM);
-
-    const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
-
-    // Auto-calculate total_cost when liters or cost_per_liter changes
-    const handleNumericChange = (field) => (e) => {
-        const updated = { ...form, [field]: e.target.value };
-        const liters = parseFloat(updated.liters);
-        const rate = parseFloat(updated.cost_per_liter);
-        if (!isNaN(liters) && !isNaN(rate)) {
-            updated.total_cost = (liters * rate).toFixed(2);
-        }
-        setForm(updated);
-    };
-
-    const saveMutation = useMutation({
-        mutationFn: (data) =>
-            isEdit
-                ? api.patch(`/api/operations/fuel/${initial.id}/`, data)
-                : api.post('/api/operations/fuel/', data),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['fuel']);
-            toast.success(isEdit ? 'Fuel log updated' : 'Fuel logged');
-            onClose();
-        },
-        onError: (err) => {
-            const msg = err.response?.data
-                ? Object.values(err.response.data).flat().join(' ')
-                : 'Something went wrong';
-            toast.error(msg);
-        },
-    });
-
-    if (!open) return null;
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const payload = { ...form };
-        if (payload.trip === '') payload.trip = null;
-        if (payload.odometer_at_fill === '') payload.odometer_at_fill = null;
-        if (payload.station_name === '') payload.station_name = null;
-        saveMutation.mutate(payload);
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h2 className="text-lg font-bold">{isEdit ? 'Edit Fuel Log' : 'Log Fuel'}</h2>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Vehicle *</label>
-                            <select required className="input-field w-full" value={form.vehicle} onChange={set('vehicle')}>
-                                <option value="">Select vehicle...</option>
-                                {vehicles?.map(v => (
-                                    <option key={v.id} value={v.id}>{v.name_model || v.license_plate} — {v.license_plate}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Linked Trip (optional)</label>
-                            <select className="input-field w-full" value={form.trip} onChange={set('trip')}>
-                                <option value="">None</option>
-                                {trips?.map(t => (
-                                    <option key={t.id} value={t.id}>
-                                        {String(t.id).substring(0, 8)}… — {t.origin || '?'} → {t.destination || '?'}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Date *</label>
-                            <input required type="date" className="input-field w-full" value={form.date} onChange={set('date')} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Station Name</label>
-                            <input className="input-field w-full" value={form.station_name} onChange={set('station_name')} placeholder="e.g. Shell Station" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Liters *</label>
-                            <input required type="number" step="0.01" min="0" className="input-field w-full" value={form.liters} onChange={handleNumericChange('liters')} placeholder="e.g. 50" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Cost per Liter ($) *</label>
-                            <input required type="number" step="0.01" min="0" className="input-field w-full" value={form.cost_per_liter} onChange={handleNumericChange('cost_per_liter')} placeholder="e.g. 1.85" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Total Cost ($) *</label>
-                            <input required type="number" step="0.01" min="0" className="input-field w-full" value={form.total_cost} onChange={set('total_cost')} placeholder="Auto-calculated" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Odometer at Fill (km)</label>
-                            <input type="number" step="0.01" min="0" className="input-field w-full" value={form.odometer_at_fill} onChange={set('odometer_at_fill')} placeholder="e.g. 46200" />
-                        </div>
-                    </div>
-                    <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                        <button type="submit" disabled={saveMutation.isPending} className="flex-1 btn-primary justify-center py-2">
-                            {saveMutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Log Fuel')}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
+import { Plus, Fuel } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import DataTable from '../components/DataTable';
+import Modal from '../components/Modal';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
 
 export default function FuelPage() {
-    const queryClient = useQueryClient();
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState(null);
+  const vehicles = [
+    { id: 1, name: 'Truck-11', plate: 'GJ-01-TR-011' },
+    { id: 2, name: 'Van-05', plate: 'MH-12-VN-005' },
+    { id: 3, name: 'Bike-02', plate: 'DL-09-BK-002' },
+  ];
 
-    const { data: logs, isLoading } = useQuery({
-        queryKey: ['fuel'],
-        queryFn: async () => {
-            const res = await api.get('/api/operations/fuel/');
-            return res.data;
-        }
-    });
+  const [logs, setLogs] = useState([
+    { id: 1, vehicleId: 1, tripId: 'TRP-10487', date: '2026-02-20', liters: 148, costPerLiter: 97.2, odometerKm: 182010, station: 'HP - SG Highway' },
+    { id: 2, vehicleId: 2, tripId: 'TRP-10492', date: '2026-02-21', liters: 42, costPerLiter: 101.1, odometerKm: 48210, station: 'IOCL - Ring Road' },
+    { id: 3, vehicleId: 3, tripId: null, date: '2026-02-19', liters: 6, costPerLiter: 108.5, odometerKm: 9302, station: 'BP - Sector 18' },
+  ]);
 
-    const { data: vehicles } = useQuery({
-        queryKey: ['vehicles'],
-        queryFn: async () => (await api.get('/api/fleet/vehicles/')).data,
-    });
+  const efficiency = [
+    { month: 'Sep', truck11: 3.8, van05: 13.2, bike02: 42.0 },
+    { month: 'Oct', truck11: 4.1, van05: 12.6, bike02: 40.5 },
+    { month: 'Nov', truck11: 3.9, van05: 13.1, bike02: 41.2 },
+    { month: 'Dec', truck11: 4.2, van05: 13.4, bike02: 43.1 },
+    { month: 'Jan', truck11: 4.0, van05: 12.9, bike02: 42.7 },
+    { month: 'Feb', truck11: 4.3, van05: 13.6, bike02: 43.8 },
+  ];
 
-    const { data: trips } = useQuery({
-        queryKey: ['trips'],
-        queryFn: async () => (await api.get('/api/trips/trips/')).data,
-    });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState({ vehicleId: 1, tripId: '', date: '', liters: '', costPerLiter: '', odometerKm: '', station: '' });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id) => api.delete(`/api/operations/fuel/${id}/`),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['fuel']);
-            toast.success('Fuel log deleted');
-        },
-    });
+  const totals = {
+    totalSpend: logs.reduce((s, l) => s + (l.liters * l.costPerLiter), 0),
+    totalLiters: logs.reduce((s, l) => s + l.liters, 0),
+  };
+  const avgCost = totals.totalLiters ? totals.totalSpend / totals.totalLiters : 0;
 
-    const vehicleMap = Object.fromEntries((vehicles ?? []).map(v => [v.id, v]));
+  const columns = [
+    {
+      id: 'veh', header: 'Vehicle', accessor: (r) => r.vehicleId,
+      cell: (vId) => {
+        const v = vehicles.find(x => x.id === vId);
+        return (
+          <div>
+            <div className="text-[13px] font-bold text-slate-100">{v?.name ?? '—'}</div>
+            <div className="text-[12px] text-slate-400 ff-mono">{v?.plate ?? '—'}</div>
+          </div>
+        );
+      }
+    },
+    { id: 'trip', header: 'Trip ID', accessor: 'tripId', cell: (v) => v ? <span className="ff-mono text-slate-200">{v}</span> : <span className="text-slate-500">—</span> },
+    { id: 'date', header: 'Date', accessor: 'date' },
+    { id: 'liters', header: 'Liters', accessor: 'liters', cell: (v) => <span className="ff-mono">{v} L</span> },
+    { id: 'cpl', header: 'Cost/L', accessor: 'costPerLiter', cell: (v) => <span className="ff-mono">₹{Number(v).toFixed(2)}</span> },
+    { id: 'total', header: 'Total Cost', accessor: (r) => r.liters * r.costPerLiter, cell: (v) => <span className="ff-mono">₹{Number(v).toFixed(0)}</span> },
+    { id: 'odo', header: 'Odometer', accessor: 'odometerKm', cell: (v) => <span className="ff-mono">{Number(v).toLocaleString()}</span> },
+    { id: 'station', header: 'Station', accessor: 'station', sortable: false },
+  ];
 
-    const openAdd = () => { setEditTarget(null); setModalOpen(true); };
-    const openEdit = (log) => {
-        setEditTarget({
-            id: log.id,
-            vehicle: log.vehicle, trip: log.trip ?? '',
-            date: log.date, liters: log.liters,
-            cost_per_liter: log.cost_per_liter, total_cost: log.total_cost,
-            odometer_at_fill: log.odometer_at_fill ?? '',
-            station_name: log.station_name ?? '',
-        });
-        setModalOpen(true);
+  const liveTotal = (Number(form.liters) || 0) * (Number(form.costPerLiter) || 0);
+
+  const openAdd = () => {
+    setForm({ vehicleId: 1, tripId: '', date: '', liters: '', costPerLiter: '', odometerKm: '', station: '' });
+    setModalOpen(true);
+  };
+
+  const save = () => {
+    const next = {
+      id: Math.max(...logs.map(l => l.id)) + 1,
+      vehicleId: Number(form.vehicleId),
+      tripId: form.tripId.trim() ? form.tripId.trim() : null,
+      date: form.date,
+      liters: Number(form.liters) || 0,
+      costPerLiter: Number(form.costPerLiter) || 0,
+      odometerKm: Number(form.odometerKm) || 0,
+      station: form.station,
     };
+    setLogs(prev => [next, ...prev]);
+    setModalOpen(false);
+  };
 
-    return (
-        <div className="space-y-6">
-            <FuelModal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                initial={editTarget}
-                vehicles={vehicles}
-                trips={trips}
-            />
-
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold">Fuel & Expenses</h1>
-                    <p className="text-sm mt-0.5">Monitor per-asset fuel spend and efficiency metrics.</p>
-                </div>
-                <button className="btn-primary" onClick={openAdd}>
-                    <Plus size={18} />
-                    Log Fuel
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {isLoading ? (
-                    <div className="h-40 bg-slate-100 rounded-2xl animate-pulse"></div>
-                ) : logs?.map((log) => {
-                    const veh = vehicleMap[log.vehicle];
-                    return (
-                        <div key={log.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                                        <Fuel size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800">
-                                            {veh ? (veh.name_model || veh.license_plate) : `V-${String(log.vehicle).substring(0, 8)}`}
-                                        </h3>
-                                        <span className="text-xs text-slate-400 font-medium">{log.date}</span>
-                                        {log.station_name && (
-                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                <MapPin size={11} className="text-slate-400" />
-                                                <span className="text-xs text-slate-500">{log.station_name}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl font-black text-slate-800 tracking-tight">
-                                        ${log.total_cost}
-                                    </div>
-                                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(log)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button onClick={() => deleteMutation.mutate(log.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl">
-                                <div className="text-center">
-                                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Quantity</div>
-                                    <div className="text-sm font-bold text-slate-700 flex items-center justify-center gap-1">
-                                        <Droplet size={14} className="text-blue-400" /> {log.liters}L
-                                    </div>
-                                </div>
-                                <div className="text-center border-x border-slate-200">
-                                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Rate</div>
-                                    <div className="text-sm font-bold text-slate-700 flex items-center justify-center gap-1">
-                                        <DollarSign size={14} className="text-emerald-400" /> {log.cost_per_liter}/L
-                                    </div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Odometer</div>
-                                    <div className="text-sm font-bold text-slate-700 flex items-center justify-center gap-1">
-                                        <BarChart2 size={14} className="text-slate-400" /> {log.odometer_at_fill ?? '—'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {log.trip && (
-                                <div className="mt-3 text-xs text-slate-400 font-medium">
-                                    Linked trip: <span className="font-mono text-slate-600">{String(log.trip).substring(0, 8)}…</span>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[18px] font-bold text-slate-100">Fuel & Expenses</div>
+          <div className="text-[13px] text-slate-400">Track spend, liters, and efficiency trends.</div>
         </div>
-    );
+        <button className="ff-btn ff-btn-primary h-10 px-4" onClick={openAdd}>
+          <Plus size={16} /> Add Fuel Log
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <MiniStat label="Total Fuel Spend (This Month)" value={`₹${totals.totalSpend.toFixed(0)}`} />
+        <MiniStat label="Total Liters" value={`${totals.totalLiters.toFixed(0)} L`} />
+        <MiniStat label="Avg Cost/L" value={`₹${avgCost.toFixed(2)}`} />
+        <MiniStat label="Best Efficiency Vehicle" value="Bike-02" />
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <DataTable
+          title={`Fuel Logs (${logs.length})`}
+          columns={columns}
+          rows={logs}
+          rowKey={(r) => r.id}
+          emptyTitle="No fuel logs"
+          emptyMessage="Add your first fill-up entry to track expenses."
+          className="overflow-hidden"
+        />
+
+        <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[14px] font-bold text-slate-100">Efficiency Trend</div>
+              <div className="text-[12px] text-slate-400">km/L over last 6 months</div>
+            </div>
+            <div className="inline-flex items-center gap-2 text-[12px] text-slate-400">
+              <Fuel size={14} />
+              Efficiency
+            </div>
+          </div>
+
+          <div className="mt-4" style={{ width: '100%', height: 280 }}>
+            <ResponsiveContainer>
+              <LineChart data={efficiency}>
+                <CartesianGrid stroke="rgba(51,65,85,0.6)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ background: '#263548', border: '1px solid rgba(51,65,85,0.8)', borderRadius: 12, color: '#E2E8F0' }}
+                  labelStyle={{ color: '#E2E8F0', fontWeight: 700 }}
+                />
+                <Line type="monotone" dataKey="truck11" stroke="#38BDF8" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="van05" stroke="#6366F1" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="bike02" stroke="#22C55E" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <Modal
+        open={modalOpen}
+        title="Add Fuel Log"
+        onClose={() => setModalOpen(false)}
+        footer={
+          <>
+            <button className="ff-btn ff-btn-ghost h-10 px-4" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="ff-btn ff-btn-primary h-10 px-4" onClick={save}>Save</button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormSelect label="Vehicle" value={form.vehicleId} onChange={(e) => setForm(p => ({ ...p, vehicleId: e.target.value }))}>
+            {vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.plate})</option>)}
+          </FormSelect>
+          <FormInput label="Trip (optional)" mono value={form.tripId} onChange={(e) => setForm(p => ({ ...p, tripId: e.target.value }))} placeholder="TRP-10492" />
+          <FormInput label="Date" type="date" value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} />
+          <FormInput label="Liters" mono type="number" value={form.liters} onChange={(e) => setForm(p => ({ ...p, liters: e.target.value }))} />
+          <FormInput label="Cost per Liter" mono type="number" value={form.costPerLiter} onChange={(e) => setForm(p => ({ ...p, costPerLiter: e.target.value }))} />
+          <FormInput label="Total Cost (auto)" mono value={liveTotal ? `₹${liveTotal.toFixed(2)}` : '—'} readOnly />
+          <FormInput label="Odometer at Fill" mono type="number" value={form.odometerKm} onChange={(e) => setForm(p => ({ ...p, odometerKm: e.target.value }))} />
+          <FormInput label="Station Name" value={form.station} onChange={(e) => setForm(p => ({ ...p, station: e.target.value }))} placeholder="HP - SG Highway" />
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="ff-card ff-card-hover p-5" style={{ borderRadius: 16 }}>
+      <div className="ff-label">{label}</div>
+      <div className="mt-2 text-[20px] font-extrabold text-slate-100">{value}</div>
+    </div>
+  );
 }

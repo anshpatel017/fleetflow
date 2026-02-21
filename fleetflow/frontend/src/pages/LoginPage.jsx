@@ -1,92 +1,116 @@
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import api from '../api/axios';
-import Navbar from '../components/Navbar';
+import { Eye, EyeOff } from 'lucide-react';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
+import useRoleStore from '../store/roleStore';
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const [serverError, setServerError] = useState('');
+    const { role, setRole } = useRoleStore();
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [show, setShow] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const canSubmit = useMemo(() => email.trim().length > 0 && password.trim().length > 0, [email, password]);
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        const next = {};
+        if (!email.trim()) next.email = 'Email is required';
+        if (!password.trim()) next.password = 'Password is required';
+        if (email && !/\S+@\S+\.\S+/.test(email)) next.email = 'Enter a valid email address';
+        setErrors(next);
+        if (Object.keys(next).length) return;
+
         setLoading(true);
-        setServerError('');
-        try {
-            const res = await api.post('/api/auth/login/', data);
-            localStorage.setItem('access_token', res.data.access);
-            localStorage.setItem('refresh_token', res.data.refresh);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            navigate('/dashboard');
-        } catch (err) {
-            const msg = err.response?.data?.non_field_errors?.[0]
-                || err.response?.data?.detail
-                || 'Invalid email or password.';
-            setServerError(msg);
-        } finally {
-            setLoading(false);
-        }
+        await new Promise(r => setTimeout(r, 650));
+        localStorage.setItem('ff_authed', 'true');
+        setLoading(false);
+        navigate('/dashboard');
     };
 
     return (
-        <div style={{ background: '#f5f5f4', minHeight: '100vh' }}>
-            <Navbar />
+        <div
+            className="min-h-screen grid place-items-center px-4"
+            style={{
+                background: 'radial-gradient(900px 500px at 50% 20%, rgba(99,102,241,0.18), transparent 60%), var(--ff-bg)',
+            }}
+        >
+            <div className="w-full max-w-[420px]">
+                <div className="ff-card p-6 md:p-7" style={{ borderRadius: 16 }}>
+                    <div className="text-center">
+                        <div className="text-[26px] font-extrabold tracking-tight">
+                            <span className="text-white">Fleet</span>
+                            <span style={{ color: 'var(--ff-primary)' }}>Flow</span>
+                        </div>
+                        <div className="mt-2 text-[13px] text-slate-400">Fleet Intelligence. Simplified.</div>
+                    </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 57px)', padding: '32px 16px' }}>
-                <div className="fade-up" style={{ width: '100%', maxWidth: 400 }}>
+                    <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+                        <FormInput
+                            label="Email"
+                            placeholder="you@fleetflow.io"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            error={errors.email}
+                            type="email"
+                            autoComplete="email"
+                        />
 
-                    {/* Header */}
-                    <div style={{ marginBottom: 28 }}>
-                        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1c1917', marginBottom: 6, letterSpacing: '-0.025em' }}>
-                            Welcome back
-                        </h1>
-                        <p style={{ color: '#78716c', fontSize: '0.875rem' }}>
-                            Don't have an account?{' '}
-                            <Link to="/signup" style={{ color: '#1c1917', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                                Sign up
+                        <FormInput
+                            label="Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            error={errors.password}
+                            type={show ? 'text' : 'password'}
+                            autoComplete="current-password"
+                            rightAdornment={
+                                <button
+                                    type="button"
+                                    className="ff-btn ff-btn-ghost w-9 h-9"
+                                    onClick={() => setShow(v => !v)}
+                                    aria-label={show ? 'Hide password' : 'Show password'}
+                                >
+                                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            }
+                        />
+
+                        <FormSelect
+                            label="Role"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                        >
+                            <option value="manager">Manager</option>
+                            <option value="dispatcher">Dispatcher</option>
+                            <option value="safety_officer">Safety Officer</option>
+                            <option value="analyst">Analyst</option>
+                        </FormSelect>
+
+                        <button
+                            className="ff-btn ff-btn-primary w-full h-[46px]"
+                            type="submit"
+                            disabled={!canSubmit || loading}
+                            style={{ opacity: !canSubmit || loading ? 0.7 : 1 }}
+                        >
+                            {loading ? 'Signing In…' : 'Sign In'}
+                        </button>
+
+                        <div className="flex justify-end">
+                            <Link to="#" className="text-[12px] font-semibold text-slate-400 hover:text-slate-200 underline underline-offset-4">
+                                Forgot Password?
                             </Link>
-                        </p>
-                    </div>
+                        </div>
+                    </form>
+                </div>
 
-                    {/* Card */}
-                    <div className="card" style={{ padding: 28 }}>
-
-                        {serverError && (
-                            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: '0.84rem', color: '#dc2626', fontWeight: 500 }}>
-                                {serverError}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                            <div>
-                                <label className="input-label">Email</label>
-                                <input type="email" placeholder="you@example.com" className="input-field"
-                                    {...register('email', {
-                                        required: 'Email is required',
-                                        pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email' }
-                                    })} />
-                                {errors.email && <p className="error-text">{errors.email.message}</p>}
-                            </div>
-
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                                    <label className="input-label" style={{ margin: 0 }}>Password</label>
-                                    <Link to="/forgot-password" style={{ fontSize: '0.78rem', color: '#78716c', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                                        Forgot password?
-                                    </Link>
-                                </div>
-                                <input type="password" placeholder="••••••••" className="input-field"
-                                    {...register('password', { required: 'Password is required' })} />
-                                {errors.password && <p className="error-text">{errors.password.message}</p>}
-                            </div>
-
-                            <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 4 }}>
-                                {loading ? 'Signing in…' : 'Sign in'}
-                            </button>
-                        </form>
-                    </div>
+                <div className="text-center text-[12px] text-slate-500 mt-4">
+                    UI-only prototype (mock auth). Use role switcher to preview RBAC.
                 </div>
             </div>
         </div>

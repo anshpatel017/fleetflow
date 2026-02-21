@@ -8,16 +8,6 @@ export default function Navbar() {
 
     const isActive = (path) => location.pathname === path;
 
-    const linkStyle = (path) => ({
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        color: isActive(path) ? '#1c1917' : '#78716c',
-        textDecoration: 'none',
-        transition: 'color 0.15s',
-        paddingBottom: '2px',
-        borderBottom: isActive(path) ? '1.5px solid #1c1917' : '1.5px solid transparent',
-    });
-
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -25,56 +15,41 @@ export default function Navbar() {
         navigate('/login');
     };
 
-    return (
-        <header style={{ background: '#ffffff', borderBottom: '1px solid #e7e5e4', position: 'sticky', top: 0, zIndex: 50 }}>
-            <nav style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    const linkClass = (path) =>
+        `text-sm font-semibold transition-colors border-b-2 pb-0.5 ${isActive(path)
+            ? 'text-slate-900 border-slate-900'
+            : 'text-slate-500 border-transparent hover:text-slate-900'
+        }`;
 
-                {/* Logo */}
-                <Link to="/dashboard" style={{ fontWeight: 800, fontSize: '1rem', color: '#1c1917', textDecoration: 'none', letterSpacing: '-0.02em' }}>
-                    FleetFlow
+    return (
+
+        <header className="bg-white/80 backdrop-blur border-b border-slate-200 sticky top-0 z-50">
+            <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+                <Link to="/dashboard" className="flex items-center gap-2 font-black text-slate-900 tracking-tight">
+                    <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs shadow-sm shadow-blue-200">FF</span>
+                    <span>FleetFlow</span>
                 </Link>
 
-                {/* Links */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-                    <Link to="/" style={linkStyle('/')}>Home</Link>
+                <div className="flex items-center gap-5">
+                    <Link to="/" className={linkClass('/')}>Home</Link>
 
                     {isAuth ? (
                         <>
-                            <Link to="/dashboard" style={linkStyle('/dashboard')}>Dashboard</Link>
-                            <Link to="/profile" style={linkStyle('/profile')}>
+                            <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
+                            <Link to="/profile" className={linkClass('/profile')}>
                                 {user?.full_name?.split(' ')[0] || 'Profile'}
                             </Link>
-                            <button onClick={handleLogout} style={{
-                                padding: '6px 14px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 600,
-                                background: 'transparent',
-                                border: '1.5px solid #e7e5e4',
-                                borderRadius: 7,
-                                color: '#78716c',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s',
-                                fontFamily: 'inherit',
-                            }}
-                                onMouseEnter={e => { e.target.style.borderColor = '#dc2626'; e.target.style.color = '#dc2626'; }}
-                                onMouseLeave={e => { e.target.style.borderColor = '#e7e5e4'; e.target.style.color = '#78716c'; }}
+                            <button
+                                onClick={handleLogout}
+                                className="text-sm font-semibold text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 px-3 py-1.5 rounded-xl transition-colors"
                             >
                                 Sign out
                             </button>
                         </>
                     ) : (
                         <>
-                            <Link to="/login" style={linkStyle('/login')}>Login</Link>
-                            <Link to="/signup" style={{
-                                padding: '6px 14px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 600,
-                                background: '#1c1917',
-                                color: '#ffffff',
-                                borderRadius: 7,
-                                textDecoration: 'none',
-                                transition: 'background 0.15s',
-                            }}>
+                            <Link to="/login" className={linkClass('/login')}>Login</Link>
+                            <Link to="/signup" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl transition-colors shadow-sm shadow-blue-200">
                                 Sign up
                             </Link>
                         </>

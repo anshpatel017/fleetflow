@@ -1,410 +1,247 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import api from '../api/axios';
-import useAuthStore from '../store/authStore';
 import {
-    TrendingUp, Wrench, Package, Truck, Users,
-    ArrowUpRight, ArrowDownRight, MapPin, Fuel,
-    CheckCircle2, Clock, XCircle, Navigation,
-    Activity, Plus, ChevronRight,
+    Truck,
+    Wrench,
+    Package,
+    TrendingUp,
+    AlertTriangle,
+    ArrowRight,
 } from 'lucide-react';
 import {
-    PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
-    CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
+    Tooltip,
 } from 'recharts';
+import KPICard from '../components/KPICard';
+import DataTable from '../components/DataTable';
+import StatusPill from '../components/StatusPill';
 
-/* ─── Helpers ─── */
-function LiveClock() {
-    const [time, setTime] = useState(new Date());
-    useEffect(() => {
-        const id = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(id);
-    }, []);
-    return (
-        <span>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-    );
+const vehiclesMock = [
+  { id: 1, name: 'Truck-11', plate: 'GJ-01-TR-011', type: 'Truck', capacityKg: 18000, odometerKm: 182340, status: 'available', region: 'West' },
+  { id: 2, name: 'Van-05', plate: 'MH-12-VN-005', type: 'Van', capacityKg: 500, odometerKm: 48210, status: 'on_trip', region: 'North' },
+  { id: 3, name: 'Bike-02', plate: 'DL-09-BK-002', type: 'Bike', capacityKg: 25, odometerKm: 9310, status: 'available', region: 'East' },
+  { id: 4, name: 'Truck-07', plate: 'KA-03-TR-007', type: 'Truck', capacityKg: 14000, odometerKm: 210901, status: 'in_shop', region: 'South' },
+  { id: 5, name: 'Van-01', plate: 'GJ-05-VN-001', type: 'Van', capacityKg: 650, odometerKm: 75220, status: 'retired', region: 'West' },
+];
+
+const tripsMock = [
+  { id: 'TRP-10492', origin: 'Ahmedabad', destination: 'Surat', vehicle: 'Van-05', driver: 'R. Patel', weightKg: 450, status: 'dispatched', date: '2026-02-21' },
+  { id: 'TRP-10487', origin: 'Mumbai', destination: 'Pune', vehicle: 'Truck-11', driver: 'S. Sharma', weightKg: 8600, status: 'completed', date: '2026-02-20' },
+  { id: 'TRP-10481', origin: 'Delhi', destination: 'Noida', vehicle: 'Bike-02', driver: 'A. Khan', weightKg: 12, status: 'draft', date: '2026-02-20' },
+  { id: 'TRP-10479', origin: 'Bengaluru', destination: 'Mysuru', vehicle: 'Truck-07', driver: 'P. Nair', weightKg: 11200, status: 'cancelled', date: '2026-02-19' },
+  { id: 'TRP-10476', origin: 'Jaipur', destination: 'Ajmer', vehicle: 'Truck-11', driver: 'S. Sharma', weightKg: 9400, status: 'dispatched', date: '2026-02-19' },
+];
+
+const complianceMock = [
+  { id: 1, name: 'R. Patel', license: 'LIC-IND-00941', days: 12, severity: 'warning' },
+  { id: 2, name: 'P. Nair', license: 'LIC-IND-00312', days: 5, severity: 'danger' },
+  { id: 3, name: 'A. Khan', license: 'LIC-IND-01104', days: 27, severity: 'warning' },
+];
+
+const typeOptions = ['All', 'Truck', 'Van', 'Bike'];
+
+function kpiFromMock(vehicles, trips) {
+  const activeFleet = vehicles.filter(v => v.status !== 'retired').length;
+  const inShop = vehicles.filter(v => v.status === 'in_shop').length;
+  const onTrip = vehicles.filter(v => v.status === 'on_trip').length;
+  const utilization = vehicles.length ? Math.round((onTrip / vehicles.length) * 100) : 0;
+  const pendingCargo = trips.filter(t => t.status === 'draft' || t.status === 'dispatched').length;
+  return { activeFleet, inShop, utilization, pendingCargo };
 }
 
-/* ─── KPI Card ─── */
-const KPICard = ({ title, value, icon: Icon, gradient, sub, trend, to }) => {
-    const inner = (
-        <div className={`relative overflow-hidden rounded-2xl p-5 text-white ${gradient} shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer`}>
-            {/* bg circle decoration */}
-            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
-            <div className="absolute -right-2 -bottom-6 w-32 h-32 rounded-full bg-white/5" />
-
-            <div className="relative">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
-                        <Icon size={20} />
-                    </div>
-                    {trend !== undefined && (
-                        <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${trend >= 0 ? 'bg-white/20' : 'bg-black/20'}`}>
-                            {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                            {Math.abs(trend)}%
-                        </span>
-                    )}
-                </div>
-                <div className="text-3xl font-black tracking-tight mb-1">
-                    {value ?? '—'}
-                </div>
-                <div className="text-sm font-semibold opacity-90">{title}</div>
-                {sub && <div className="text-xs opacity-70 mt-0.5">{sub}</div>}
-            </div>
-        </div>
-    );
-    return to ? <Link to={to}>{inner}</Link> : inner;
+const ChartTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const p = payload[0];
+  return (
+    <div className="ff-card px-3 py-2" style={{ background: 'var(--ff-surface-elev)', borderRadius: 12 }}>
+      <div className="text-[13px] font-bold text-slate-100">{p.name}</div>
+      <div className="text-[12px] text-slate-300">{p.value} vehicles</div>
+    </div>
+  );
 };
 
-/* ─── Status Pill ─── */
-const SPill = ({ status }) => {
-    const map = {
-        draft:      { cls: 'bg-slate-100 text-slate-600',   icon: Clock,        label: 'Draft' },
-        dispatched: { cls: 'bg-blue-50 text-blue-700',      icon: Navigation,   label: 'Dispatched' },
-        completed:  { cls: 'bg-emerald-50 text-emerald-700',icon: CheckCircle2, label: 'Completed' },
-        cancelled:  { cls: 'bg-rose-50 text-rose-700',      icon: XCircle,      label: 'Cancelled' },
-    };
-    const c = map[status] ?? map.draft;
-    const Icon = c.icon;
-    return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${c.cls}`}>
-            <Icon size={10} />
-            {c.label}
-        </span>
-    );
-};
-
-/* ─── Custom Tooltip for Charts ─── */
-const ChartTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="bg-white border border-slate-100 shadow-xl rounded-xl px-3 py-2 text-sm">
-            {label && <p className="font-semibold text-slate-700 mb-1">{label}</p>}
-            {payload.map((p, i) => (
-                <p key={i} style={{ color: p.color }} className="font-medium">
-                    {p.name}: <span className="font-bold">{p.value}</span>
-                </p>
-            ))}
-        </div>
-    );
-};
-
-/* ─── Main Dashboard ─── */
 export default function DashboardPage() {
-    const { user } = useAuthStore();
+    const [vehicleType, setVehicleType] = useState('All');
+    const [vehicleStatus, setVehicleStatus] = useState('All');
 
-    const { data: kpis, isLoading: kpisLoading } = useQuery({
-        queryKey: ['dashboard-kpis'],
-        queryFn: async () => (await api.get('/api/analytics/dashboard/')).data,
-        refetchInterval: 30000,
+    const filteredVehicles = vehiclesMock.filter(v => {
+      const okType = vehicleType === 'All' ? true : v.type === vehicleType;
+      const okStatus = vehicleStatus === 'All' ? true : v.status === vehicleStatus;
+      return okType && okStatus;
     });
 
-    const { data: vehicles } = useQuery({
-        queryKey: ['vehicles'],
-        queryFn: async () => (await api.get('/api/fleet/vehicles/')).data,
-    });
+    const kpi = kpiFromMock(filteredVehicles, tripsMock);
 
-    const { data: trips } = useQuery({
-        queryKey: ['trips'],
-        queryFn: async () => (await api.get('/api/trips/trips/')).data,
-    });
+    const fleetStatus = [
+      { name: 'Available', value: filteredVehicles.filter(v => v.status === 'available').length, color: '#22C55E' },
+      { name: 'On Trip', value: filteredVehicles.filter(v => v.status === 'on_trip').length, color: '#38BDF8' },
+      { name: 'In Shop', value: filteredVehicles.filter(v => v.status === 'in_shop').length, color: '#F59E0B' },
+      { name: 'Retired', value: filteredVehicles.filter(v => v.status === 'retired').length, color: '#64748B' },
+    ].filter(x => x.value > 0);
 
-    const { data: drivers } = useQuery({
-        queryKey: ['drivers'],
-        queryFn: async () => (await api.get('/api/drivers/drivers/')).data,
-    });
-
-    /* ── Derived data ── */
-    const vehicleStatusData = vehicles
-        ? [
-            { name: 'Available',  value: vehicles.filter(v => v.status === 'available').length,  color: '#10b981' },
-            { name: 'On Trip',    value: vehicles.filter(v => v.status === 'on_trip').length,    color: '#3b82f6' },
-            { name: 'In Shop',    value: vehicles.filter(v => v.status === 'in_shop').length,    color: '#f59e0b' },
-            { name: 'Retired',    value: vehicles.filter(v => v.status === 'retired').length,    color: '#94a3b8' },
-        ].filter(d => d.value > 0)
-        : [];
-
-    const tripStatusData = trips
-        ? [
-            { name: 'Draft',      value: trips.filter(t => t.status === 'draft').length      },
-            { name: 'Dispatched', value: trips.filter(t => t.status === 'dispatched').length },
-            { name: 'Completed',  value: trips.filter(t => t.status === 'completed').length  },
-            { name: 'Cancelled',  value: trips.filter(t => t.status === 'cancelled').length  },
-        ]
-        : [];
-
-    const recentTrips = trips
-        ? [...trips].slice(0, 5)
-        : [];
-
-    const vehicleMap = Object.fromEntries((vehicles ?? []).map(v => [v.id, v]));
-    const driverMap  = Object.fromEntries((drivers  ?? []).map(d => [d.id, d]));
-
-    const greeting = () => {
-        const h = new Date().getHours();
-        if (h < 12) return 'Good morning';
-        if (h < 17) return 'Good afternoon';
-        return 'Good evening';
-    };
-
-    const totalVehicles = vehicles?.length ?? 0;
-    const totalDrivers  = drivers?.length ?? 0;
-    const activeDrivers = drivers?.filter(d => d.status === 'on_duty' || d.status === 'on_trip').length ?? 0;
-    const utilization   = kpis?.utilization_rate ?? 0;
+    const tripColumns = [
+      {
+        id: 'id',
+        header: 'Trip ID',
+        accessor: 'id',
+        cell: (v) => <span className="ff-mono text-[13px] text-slate-200">{v}</span>,
+      },
+      {
+        id: 'route',
+        header: 'Route',
+        accessor: (r) => `${r.origin} → ${r.destination}`,
+        cell: (_v, r) => (
+          <div className="text-[13px] font-semibold text-slate-100">
+            {r.origin} <ArrowRight size={14} className="inline-block mx-1 text-slate-500" /> {r.destination}
+          </div>
+        ),
+        sortable: false,
+      },
+      { id: 'vehicle', header: 'Vehicle', accessor: 'vehicle', cell: (v) => <span className="text-[13px] text-slate-200">{v}</span> },
+      { id: 'driver', header: 'Driver', accessor: 'driver', cell: (v) => <span className="text-[13px] text-slate-200">{v}</span> },
+      { id: 'weightKg', header: 'Cargo (kg)', accessor: 'weightKg', cell: (v) => <span className="ff-mono">{v}</span> },
+      { id: 'status', header: 'Status', accessor: 'status', sortable: false, cell: (v) => <StatusPill status={v} /> },
+    ];
 
     return (
         <div className="space-y-6">
 
-            {/* ── Header ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <p className="text-sm text-slate-500 font-medium mb-0.5">
-                        <LiveClock /> · {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </p>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                        {greeting()}, {user?.full_name?.split(' ')[0] || 'there'} 👋
-                    </h1>
-                    <p className="text-slate-500 text-sm mt-0.5">Here's what's happening with your fleet today.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <KPICard label="Active Fleet" value={kpi.activeFleet} color="#38BDF8" icon={Truck} leftBorderColor="#38BDF8" />
+            <KPICard label="Maintenance Alerts" value={kpi.inShop} color="#F59E0B" icon={Wrench} leftBorderColor="#F59E0B" sub="vehicles in shop" />
+            <KPICard label="Utilization Rate" value={`${kpi.utilization}%`} color="#6366F1" icon={TrendingUp} leftBorderColor="#6366F1" sub="on-trip ratio" />
+            <KPICard label="Pending Cargo" value={kpi.pendingCargo} color="#94A3B8" icon={Package} leftBorderColor="#94A3B8" />
+          </div>
+
+          <div className="ff-card p-4" style={{ borderRadius: 16 }}>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="text-[13px] font-semibold text-slate-200">Filters</div>
+              <div className="flex flex-wrap gap-2">
+                <div className="inline-flex rounded-full p-1" style={{ background: 'rgba(30,41,59,0.7)', border: '1px solid rgba(51,65,85,0.8)' }}>
+                  {typeOptions.map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setVehicleType(t)}
+                      className="px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors"
+                      style={{
+                        color: vehicleType === t ? '#FFFFFF' : '#94A3B8',
+                        background: vehicleType === t ? 'rgba(99,102,241,0.22)' : 'transparent',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex gap-2 shrink-0">
-                    <Link to="/trips" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
-                        <Plus size={16} /> Dispatch Trip
-                    </Link>
-                    <Link to="/vehicles" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">
-                        <Truck size={16} /> Fleet
-                    </Link>
+
+                <div className="inline-flex rounded-full p-1" style={{ background: 'rgba(30,41,59,0.7)', border: '1px solid rgba(51,65,85,0.8)' }}>
+                  {['All', 'available', 'on_trip', 'in_shop', 'retired'].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setVehicleStatus(s)}
+                      className="px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors"
+                      style={{
+                        color: vehicleStatus === s ? '#FFFFFF' : '#94A3B8',
+                        background: vehicleStatus === s ? 'rgba(99,102,241,0.22)' : 'transparent',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {s === 'on_trip' ? 'On Trip' : s}
+                    </button>
+                  ))}
+
                 </div>
+              </div>
             </div>
+          </div>
 
-            {/* ── KPI Cards ── */}
-            {kpisLoading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[1,2,3,4].map(i => <div key={i} className="h-36 bg-slate-200 rounded-2xl animate-pulse" />)}
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KPICard
-                        title="Active Fleet"
-                        value={kpis?.active_fleet ?? 0}
-                        sub={`of ${totalVehicles} vehicles`}
-                        icon={Truck}
-                        gradient="bg-gradient-to-br from-blue-500 to-blue-700"
-                        trend={12}
-                        to="/vehicles"
-                    />
-                    <KPICard
-                        title="Fleet Utilization"
-                        value={`${utilization.toFixed(1)}%`}
-                        sub="on-trip ratio"
-                        icon={TrendingUp}
-                        gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
-                        trend={2.4}
-                    />
-                    <KPICard
-                        title="Maintenance Alerts"
-                        value={kpis?.in_shop ?? 0}
-                        sub="vehicles in shop"
-                        icon={Wrench}
-                        gradient="bg-gradient-to-br from-amber-400 to-orange-500"
-                        trend={-5}
-                        to="/maintenance"
-                    />
-                    <KPICard
-                        title="Active Drivers"
-                        value={activeDrivers}
-                        sub={`of ${totalDrivers} total`}
-                        icon={Users}
-                        gradient="bg-gradient-to-br from-emerald-400 to-teal-600"
-                        to="/drivers"
-                    />
-                </div>
-            )}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <DataTable
+              title="Recent Trips"
+              columns={tripColumns}
+              rows={tripsMock.slice(0, 5)}
+              rowKey={(r) => r.id}
+              emptyTitle="No trips yet"
+              emptyMessage="Create your first trip dispatch to see it here."
+              className="overflow-hidden"
+            />
 
-            {/* ── Charts row ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+              <div className="flex items-center justify-between">
+                <div className="text-[14px] font-bold text-slate-100">Fleet Status</div>
+                <div className="text-[12px] text-slate-400">Current distribution</div>
+              </div>
 
-                {/* Trip Status Bar Chart */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="font-bold text-slate-800">Trip Activity</h2>
-                            <p className="text-xs text-slate-400 mt-0.5">Breakdown by status</p>
-                        </div>
-                        <Link to="/trips" className="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:underline">
-                            View all <ChevronRight size={12} />
-                        </Link>
-                    </div>
-                    {trips ? (
-                        <ResponsiveContainer width="100%" height={220}>
-                            <BarChart data={tripStatusData} barCategoryGap="35%">
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f8fafc', radius: 8 }} />
-                                <Bar dataKey="value" name="Trips" radius={[8, 8, 0, 0]}>
-                                    {tripStatusData.map((entry, i) => {
-                                        const colors = ['#94a3b8','#3b82f6','#10b981','#f43f5e'];
-                                        return <Cell key={i} fill={colors[i % colors.length]} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-[220px] flex items-center justify-center text-slate-300 text-sm">Loading…</div>
-                    )}
-                </div>
-
-                {/* Vehicle Status Donut */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="font-bold text-slate-800">Vehicle Status</h2>
-                            <p className="text-xs text-slate-400 mt-0.5">{totalVehicles} total assets</p>
-                        </div>
-                        <Link to="/vehicles" className="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:underline">
-                            Manage <ChevronRight size={12} />
-                        </Link>
-                    </div>
-                    {vehicleStatusData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={160}>
-                                <PieChart>
-                                    <Pie
-                                        data={vehicleStatusData}
-                                        cx="50%" cy="50%"
-                                        innerRadius={48} outerRadius={72}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                    >
-                                        {vehicleStatusData.map((entry, i) => (
-                                            <Cell key={i} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<ChartTooltip />} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="grid grid-cols-2 gap-y-2 mt-2">
-                                {vehicleStatusData.map((d, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
-                                        <span className="text-xs text-slate-600 font-medium truncate">{d.name}</span>
-                                        <span className="text-xs font-bold text-slate-800 ml-auto">{d.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="h-[160px] flex items-center justify-center text-slate-300 text-sm">No vehicle data</div>
-                    )}
-                </div>
-            </div>
-
-            {/* ── Recent Trips + Quick Actions ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Recent Trips */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600"><Activity size={16} /></div>
-                            <h2 className="font-bold text-slate-800">Recent Trips</h2>
-                        </div>
-                        <Link to="/trips" className="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:underline">
-                            View all <ChevronRight size={12} />
-                        </Link>
-                    </div>
-                    {recentTrips.length === 0 && !trips ? (
-                        <div className="p-8 text-center text-slate-400 text-sm">Loading trips…</div>
-                    ) : recentTrips.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400 text-sm">No trips yet. <Link to="/trips" className="text-blue-500 font-semibold">Dispatch one →</Link></div>
-                    ) : (
-                        <div className="divide-y divide-slate-50">
-                            {recentTrips.map(trip => {
-                                const veh = vehicleMap[trip.vehicle];
-                                const drv = driverMap[trip.driver];
-                                return (
-                                    <div key={trip.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50/60 transition-colors">
-                                        <div className="p-2 rounded-xl bg-slate-50 text-slate-400 shrink-0">
-                                            <MapPin size={16} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-semibold text-slate-800 truncate">
-                                                    {trip.origin || 'Unknown'} → {trip.destination || 'Unknown'}
-                                                </span>
-                                                <SPill status={trip.status} />
-                                            </div>
-                                            <div className="text-xs text-slate-400 mt-0.5 truncate">
-                                                {veh ? (veh.name_model || veh.license_plate) : 'Unknown vehicle'} · {drv ? drv.full_name : 'Unknown driver'}
-                                            </div>
-                                        </div>
-                                        <div className="text-sm font-bold text-slate-700 shrink-0">
-                                            {trip.revenue ? `$${trip.revenue}` : '—'}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <h2 className="font-bold text-slate-800 mb-4">Quick Actions</h2>
-                    <div className="space-y-2">
-                        {[
-                            { to: '/trips',       icon: Navigation, label: 'Dispatch a Trip',    sub: 'Assign vehicle & driver', iconCls: 'bg-blue-50 text-blue-600'    },
-                            { to: '/vehicles',    icon: Truck,      label: 'Add Vehicle',         sub: 'Register new asset',      iconCls: 'bg-indigo-50 text-indigo-600' },
-                            { to: '/drivers',     icon: Users,      label: 'Add Driver',          sub: 'Create driver profile',   iconCls: 'bg-purple-50 text-purple-600' },
-                            { to: '/maintenance', icon: Wrench,     label: 'Log Service',         sub: 'Record maintenance work', iconCls: 'bg-amber-50 text-amber-600'  },
-                            { to: '/fuel',        icon: Fuel,       label: 'Log Fuel Fill-up',    sub: 'Track fuel expenses',     iconCls: 'bg-emerald-50 text-emerald-600' },
-                        ].map(({ to, icon: Icon, label, sub, iconCls }) => (
-                            <Link key={to} to={to}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group"
-                            >
-                                <div className={`p-2 rounded-xl ${iconCls} shrink-0`}>
-                                    <Icon size={16} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">{label}</div>
-                                    <div className="text-xs text-slate-400">{sub}</div>
-                                </div>
-                                <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 shrink-0" />
-                            </Link>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div style={{ width: '100%', height: 240 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={fleetStatus}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={62}
+                        outerRadius={90}
+                        paddingAngle={3}
+                      >
+                        {fleetStatus.map((e) => (
+                          <Cell key={e.name} fill={e.color} />
                         ))}
-                    </div>
+                      </Pie>
+                      <Tooltip content={<ChartTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
+
+                <div className="space-y-2">
+                  {fleetStatus.map((s) => (
+                    <div key={s.name} className="flex items-center justify-between rounded-xl px-3 py-2" style={{ background: 'rgba(38,53,72,0.65)', border: '1px solid rgba(51,65,85,0.75)' }}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
+                        <span className="text-[13px] font-semibold text-slate-200">{s.name}</span>
+                      </div>
+                      <span className="ff-mono text-[13px] text-slate-200">{s.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[14px] font-bold text-slate-100">Driver Compliance Alerts</div>
+                <div className="text-[12px] text-slate-400 mt-0.5">Licenses expiring within 30 days</div>
+              </div>
+              <div className="text-[12px] text-slate-500">Next 30 days</div>
             </div>
 
-            {/* ── Driver Status Summary ── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-emerald-50 rounded-lg text-emerald-600"><Users size={16} /></div>
-                        <h2 className="font-bold text-slate-800">Driver Status Overview</h2>
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {complianceMock.map((d) => (
+                <div
+                  key={d.id}
+                  className="rounded-xl px-4 py-3 flex items-start gap-3"
+                  style={{
+                    background: d.severity === 'danger' ? 'rgba(239,68,68,0.10)' : 'rgba(245,158,11,0.10)',
+                    border: `1px solid ${d.severity === 'danger' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-xl grid place-items-center" style={{ background: 'rgba(15,17,23,0.45)', border: '1px solid rgba(51,65,85,0.75)' }}>
+                    <AlertTriangle size={16} className={d.severity === 'danger' ? 'text-red-400' : 'text-amber-300'} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-slate-100 truncate">{d.name}</div>
+                    <div className="text-[12px] text-slate-400 ff-mono truncate">{d.license}</div>
+                    <div className={`mt-1 text-[12px] font-bold ${d.severity === 'danger' ? 'text-red-400' : 'text-amber-300'}`}>
+                      Expires in {d.days} days
                     </div>
-                    <Link to="/drivers" className="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:underline">
-                        View all <ChevronRight size={12} />
-                    </Link>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                        { status: 'on_duty',   label: 'On Duty',    color: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                        { status: 'on_trip',   label: 'On Trip',    color: 'blue',    bg: 'bg-blue-50',    text: 'text-blue-700'    },
-                        { status: 'off_duty',  label: 'Off Duty',   color: 'slate',   bg: 'bg-slate-50',   text: 'text-slate-600'   },
-                        { status: 'suspended', label: 'Suspended',  color: 'rose',    bg: 'bg-rose-50',    text: 'text-rose-700'    },
-                    ].map(({ status, label, bg, text }) => {
-                        const count = drivers?.filter(d => d.status === status).length ?? 0;
-                        return (
-                            <div key={status} className={`${bg} rounded-xl p-4 text-center`}>
-                                <div className={`text-2xl font-black ${text}`}>{count}</div>
-                                <div className={`text-xs font-semibold ${text} mt-1`}>{label}</div>
-                            </div>
-                        );
-                    })}
-                </div>
+              ))}
             </div>
+          </div>
 
         </div>
     );
