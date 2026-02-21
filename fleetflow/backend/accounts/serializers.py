@@ -44,10 +44,11 @@ class LoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
+    id = serializers.UUIDField(source='user_id', read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'full_name', 'phone', 'profile_image')
+        fields = ('id', 'user_id', 'email', 'full_name', 'phone', 'profile_image')
 
     def update(self, instance, validated_data):
         instance.full_name = validated_data.get('full_name', instance.full_name)

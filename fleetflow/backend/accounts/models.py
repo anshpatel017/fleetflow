@@ -21,18 +21,45 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+import uuid
+
 class CustomUser(AbstractUser):
     username = None  # remove username field
 
-    email = models.EmailField(unique=True)
-    full_name = models.CharField(max_length=150, blank=True, default='')
-    phone = models.CharField(max_length=15, blank=True, null=True)
-    profile_image = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    FLEET_MANAGER = 'manager'
+    DISPATCHER = 'dispatcher'
+    SAFETY_OFFICER = 'safety_officer'
+    FINANCIAL_ANALYST = 'analyst'
 
+    ROLE_CHOICES = [
+        (FLEET_MANAGER, 'Fleet Manager'),
+        (DISPATCHER, 'Dispatcher'),
+        (SAFETY_OFFICER, 'Safety Officer'),
+        (FINANCIAL_ANALYST, 'Financial Analyst'),
+    ]
+
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=128, db_column='password_hash')  # Map to native schema column
+    full_name = models.CharField(max_length=100, blank=True, default='', db_column='name')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=FLEET_MANAGER)
+    profile_image = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    
+    date_joined = models.DateTimeField(auto_now_add=True, db_column='created_at')
+    
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
+
+    class Meta:
+        db_table = 'users'
 
     def __str__(self):
         return self.email
