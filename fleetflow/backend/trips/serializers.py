@@ -1,36 +1,18 @@
 from rest_framework import serializers
 from .models import Trip
 
-
 class TripSerializer(serializers.ModelSerializer):
-    distance = serializers.FloatField(read_only=True)
-    vehicle_plate = serializers.CharField(source='vehicle.license_plate', read_only=True)
-    driver_name = serializers.CharField(source='driver.user.full_name', read_only=True)
-
+    id = serializers.UUIDField(source='trip_id', read_only=True)
     class Meta:
         model = Trip
-        fields = (
-            'id', 'vehicle', 'vehicle_plate', 'driver', 'driver_name',
-            'status', 'origin', 'destination', 'cargo_weight',
-            'start_odometer', 'end_odometer', 'distance',
-            'scheduled_at', 'started_at', 'completed_at', 'notes',
-            'created_at', 'updated_at',
-        )
-        read_only_fields = (
-            'status', 'started_at', 'completed_at',
-            'end_odometer', 'created_at', 'updated_at',
-        )
+        fields = ['id', 'trip_id', 'vehicle', 'driver', 'created_by', 'origin', 'destination', 'cargo_weight_kg', 'cargo_description', 'status', 'scheduled_at', 'dispatched_at', 'completed_at', 'odometer_start', 'odometer_end', 'distance_km', 'revenue', 'notes']
+        read_only_fields = ('created_at', 'distance_km')
 
-
-class TripCreateSerializer(serializers.ModelSerializer):
-    """Used for creating and dispatching a trip."""
-    class Meta:
-        model = Trip
-        fields = (
-            'vehicle', 'driver', 'origin', 'destination',
-            'cargo_weight', 'start_odometer', 'scheduled_at', 'notes',
-        )
-
-
-class TripCompleteSerializer(serializers.Serializer):
-    end_odometer = serializers.DecimalField(max_digits=12, decimal_places=1)
+    def validate(self, data):
+        # Create a temporary instance to run the model's clean() method
+        instance = Trip(**data)
+        try:
+            instance.clean()
+        except Exception as e:
+            raise serializers.ValidationError(e.message_dict if hasattr(e, 'message_dict') else str(e))
+        return data

@@ -1,252 +1,288 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Download, Calendar, Filter } from 'lucide-react';
+import DataTable from '../components/DataTable';
 import {
-    LineChart, Line,
-    BarChart, Bar,
-    PieChart, Pie, Cell,
-    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  RadialBarChart,
+  RadialBar,
 } from 'recharts';
-import KPICard from '../components/KPICard';
-import Toast from '../components/Toast';
-import {
-    fuelCostData, maintenanceVsFuelData, expenseBreakdown,
-    monthlyFinancials,
-} from '../data/mockData';
-
-const PERIODS = [
-    { label: 'Last 30 Days', key: '30' },
-    { label: 'Last 90 Days', key: '90' },
-    { label: 'Last 365 Days', key: '365' },
-    { label: 'Custom Range', key: 'custom' },
-];
-
-const kpis = [
-    { title: 'Total Fuel Cost', value: '$42,800', icon: '⛽', color: '#D4500A', change: '+6.2%' },
-    { title: 'Total Maintenance Cost', value: '$18,400', icon: '🔧', color: '#3B9FD4', change: '-3.1%' },
-    { title: 'Fleet Utilization Rate', value: '72%', icon: '🚛', color: '#1A6EA8', change: '+2.4%' },
-    { title: 'Estimated Fleet ROI', value: '34%', icon: '📈', color: '#34C759', change: '+5.7%' },
-];
-
-function ChartTooltip({ active, payload, label }) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="px-4 py-3 rounded-xl shadow-lg text-sm"
-            style={{ background: '#2C2C2E', border: '1px solid rgba(244,242,238,0.1)' }}>
-            <p className="font-semibold text-white mb-1">{label}</p>
-            {payload.map((p, i) => (
-                <p key={i} style={{ color: p.fill || p.stroke || p.color }}>
-                    {p.name}: ${p.value.toLocaleString()}
-                </p>
-            ))}
-        </div>
-    );
-}
-
-function PieTooltip({ active, payload }) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div className="px-4 py-3 rounded-xl shadow-lg text-sm"
-            style={{ background: '#2C2C2E', border: '1px solid rgba(244,242,238,0.1)' }}>
-            <p className="font-semibold" style={{ color: payload[0].payload.color }}>
-                {payload[0].name}: ${payload[0].value.toLocaleString()}
-            </p>
-        </div>
-    );
-}
 
 export default function AnalyticsPage() {
-    const [period, setPeriod] = useState('90');
-    const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
-    const [exportingPdf, setExportingPdf] = useState(false);
-    const [exportingCsv, setExportingCsv] = useState(false);
+  const [range, setRange] = useState('30d');
+  const [vehicle, setVehicle] = useState('All');
+  const [region, setRegion] = useState('All');
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const isRestricted = user?.role === 'dispatcher' || user?.role === 'safety_officer';
+  const roiRows = [
+    { id: 1, vehicle: 'Truck-11', acquisition: 4200000, revenue: 6120000, fuel: 1180000, maintenance: 320000, net: 620000, roi: 14.8 },
+    { id: 2, vehicle: 'Van-05', acquisition: 980000, revenue: 720000, fuel: 310000, maintenance: 84000, net: 326000, roi: 33.3 },
+    { id: 3, vehicle: 'Bike-02', acquisition: 85000, revenue: 128000, fuel: 26000, maintenance: 9000, net: 93000, roi: 109.4 },
+    { id: 4, vehicle: 'Truck-07', acquisition: 3900000, revenue: 2400000, fuel: 1320000, maintenance: 610000, net: -530000, roi: -13.6 },
+  ];
 
-    const showToast = (message, type = 'success') => setToast({ visible: true, message, type });
+  const efficiency = [
+    { vehicle: 'Truck-11', kmpl: 4.3 },
+    { vehicle: 'Truck-07', kmpl: 3.7 },
+    { vehicle: 'Van-05', kmpl: 13.6 },
+    { vehicle: 'Bike-02', kmpl: 43.8 },
+  ];
 
-    const handleExport = (type) => {
-        if (type === 'pdf') setExportingPdf(true);
-        else setExportingCsv(true);
+  const utilization = [
+    { t: 'W1', u: 58 },
+    { t: 'W2', u: 63 },
+    { t: 'W3', u: 61 },
+    { t: 'W4', u: 67 },
+    { t: 'W5', u: 72 },
+    { t: 'W6', u: 69 },
+  ];
 
-        setTimeout(() => {
-            if (type === 'pdf') setExportingPdf(false);
-            else setExportingCsv(false);
-            showToast('Report exported successfully');
-        }, 1500);
-    };
+  const costBreakdown = [
+    { vehicle: 'Truck-11', fuel: 118, maintenance: 32 },
+    { vehicle: 'Van-05', fuel: 31, maintenance: 8.4 },
+    { vehicle: 'Bike-02', fuel: 2.6, maintenance: 0.9 },
+    { vehicle: 'Truck-07', fuel: 132, maintenance: 61 },
+  ];
 
-    return (
-        <div className="flex flex-col gap-6 fade-up relative">
-            {/* ── Restricted overlay ── */}
-            {isRestricted && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl"
-                    style={{ background: 'rgba(244,242,238,0.85)', backdropFilter: 'blur(10px)' }}>
-                    <div className="text-center px-6">
-                        <span className="text-5xl mb-4 block">🔒</span>
-                        <h3 className="text-lg font-bold" style={{ color: '#1C1C1E' }}>Access Restricted</h3>
-                        <p className="text-sm mt-2 max-w-sm mx-auto" style={{ color: 'rgba(28,28,30,0.5)' }}>
-                            Analytics is available for Managers and Analysts only
-                        </p>
-                    </div>
-                </div>
-            )}
+  const tripVolume = [
+    { t: 'W1', trips: 18 },
+    { t: 'W2', trips: 22 },
+    { t: 'W3', trips: 20 },
+    { t: 'W4', trips: 25 },
+    { t: 'W5', trips: 27 },
+    { t: 'W6', trips: 24 },
+  ];
 
-            {/* ── Header + date filter + export ── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
-                <div>
-                    <h2 className="text-xl font-bold tracking-tight" style={{ color: '#1C1C1E' }}>Operational Analytics & Financial Reports</h2>
-                    <p className="text-xs mt-1" style={{ color: 'rgba(28,28,30,0.4)' }}>Costs, revenue, and fleet ROI analytics</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    {PERIODS.map(p => (
-                        <button key={p.key} onClick={() => setPeriod(p.key)}
-                            className="px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none"
-                            style={{
-                                background: period === p.key ? '#1A6EA8' : '#FFFFFF',
-                                color: period === p.key ? '#FFFFFF' : 'rgba(28,28,30,0.6)',
-                                border: period === p.key ? 'none' : '1px solid rgba(28,28,30,0.1)',
-                            }}>
-                            {p.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
+  const columns = [
+    { id: 'veh', header: 'Vehicle', accessor: 'vehicle', cell: (v) => <span className="text-[13px] font-bold text-slate-100">{v}</span> },
+    { id: 'acq', header: 'Acquisition Cost', accessor: 'acquisition', cell: (v) => <span className="ff-mono">₹{Number(v).toLocaleString()}</span> },
+    { id: 'rev', header: 'Total Revenue', accessor: 'revenue', cell: (v) => <span className="ff-mono">₹{Number(v).toLocaleString()}</span> },
+    { id: 'fuel', header: 'Fuel Cost', accessor: 'fuel', cell: (v) => <span className="ff-mono">₹{Number(v).toLocaleString()}</span> },
+    { id: 'maint', header: 'Maintenance Cost', accessor: 'maintenance', cell: (v) => <span className="ff-mono">₹{Number(v).toLocaleString()}</span> },
+    {
+      id: 'net',
+      header: 'Net Profit',
+      accessor: 'net',
+      cell: (v) => (
+        <span className={`ff-mono font-bold ${Number(v) >= 0 ? 'text-emerald-300' : 'text-red-400'}`}>₹{Number(v).toLocaleString()}</span>
+      )
+    },
+    {
+      id: 'roi',
+      header: 'ROI %',
+      accessor: 'roi',
+      cell: (v) => (
+        <span className={`ff-mono font-bold ${Number(v) >= 0 ? 'text-emerald-300' : 'text-red-400'}`}>{Number(v).toFixed(1)}%</span>
+      )
+    },
+  ];
 
-            {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {kpis.map((k, i) => (
-                    <KPICard key={i} title={k.title} value={k.value} icon={k.icon} color={k.color} change={k.change} />
-                ))}
-            </div>
-
-            {/* ── Charts row 1: Line + Pie ── */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Line chart - Monthly Fuel Cost Trend */}
-                <div className="xl:col-span-2 rounded-2xl p-5"
-                    style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                    <h3 className="text-sm font-bold mb-4" style={{ color: '#1C1C1E' }}>Monthly Fuel Cost Trend</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={fuelCostData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(28,28,30,0.06)" />
-                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(28,28,30,0.4)' }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fontSize: 11, fill: 'rgba(28,28,30,0.4)' }} axisLine={false} tickLine={false}
-                                tickFormatter={v => `$${(v / 1000).toFixed(1)}k`} />
-                            <Tooltip content={<ChartTooltip />} />
-                            <Line type="monotone" dataKey="cost" name="Fuel Cost" stroke="#D4500A" strokeWidth={2.5}
-                                dot={{ r: 4, fill: '#D4500A', stroke: '#FFFFFF', strokeWidth: 2 }}
-                                activeDot={{ r: 6, fill: '#D4500A' }} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                {/* Pie chart - Expense Breakdown */}
-                <div className="rounded-2xl p-5"
-                    style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                    <h3 className="text-sm font-bold mb-4" style={{ color: '#1C1C1E' }}>Expense Breakdown</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                            <Pie data={expenseBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
-                                paddingAngle={3} dataKey="value" stroke="none">
-                                {expenseBreakdown.map((entry, i) => (
-                                    <Cell key={i} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip content={<PieTooltip />} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                    {/* Legend */}
-                    <div className="flex flex-col gap-2 mt-2">
-                        {expenseBreakdown.map((item, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-                                <span className="text-[11px] flex-1" style={{ color: 'rgba(28,28,30,0.6)' }}>{item.name}</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#1C1C1E' }}>${item.value.toLocaleString()}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Charts row 2: Grouped Bar ── */}
-            <div className="rounded-2xl p-5"
-                style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                <h3 className="text-sm font-bold mb-4" style={{ color: '#1C1C1E' }}>Fuel Cost vs Maintenance Cost by Month</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={maintenanceVsFuelData} barGap={4}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(28,28,30,0.06)" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(28,28,30,0.4)' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: 'rgba(28,28,30,0.4)' }} axisLine={false} tickLine={false}
-                            tickFormatter={v => `$${(v / 1000).toFixed(1)}k`} />
-                        <Tooltip content={<ChartTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11 }} />
-                        <Bar dataKey="fuel" name="Fuel" fill="#D4500A" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="maintenance" name="Maintenance" fill="#3B9FD4" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* ── Monthly Financial Summary Table ── */}
-            <div className="rounded-2xl p-5"
-                style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                <h3 className="text-sm font-bold mb-4" style={{ color: '#1C1C1E' }}>Monthly Financial Summary</h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                        <thead>
-                            <tr>
-                                {['Month', 'Revenue ($)', 'Fuel Cost ($)', 'Maintenance ($)', 'Net Profit ($)'].map(h => (
-                                    <th key={h} className="text-[10px] font-bold uppercase tracking-wider px-4 py-3"
-                                        style={{ color: 'rgba(28,28,30,0.35)', borderBottom: '1px solid rgba(28,28,30,0.06)' }}>
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {monthlyFinancials.map(row => (
-                                <tr key={row.month} className="transition-colors"
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,159,212,0.03)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                    <td className="px-4 py-3 text-xs font-semibold" style={{ color: '#1C1C1E' }}>{row.month}</td>
-                                    <td className="px-4 py-3 text-xs font-mono" style={{ color: 'rgba(28,28,30,0.6)' }}>${row.revenue.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-xs font-mono" style={{ color: '#D4500A' }}>${row.fuel.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-xs font-mono" style={{ color: '#3B9FD4' }}>${row.maintenance.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-xs font-bold"
-                                        style={{ color: row.profit >= 0 ? '#34C759' : '#B03A06' }}>
-                                        {row.profit >= 0 ? '+' : ''}${row.profit.toLocaleString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* ── Export Buttons ── */}
-            <div className="flex flex-wrap gap-3">
-                <button onClick={() => handleExport('pdf')} disabled={exportingPdf}
-                    className="px-6 py-3 rounded-xl text-sm font-bold text-white cursor-pointer border-none transition-all hover:scale-105 disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
-                    {exportingPdf ? (
-                        <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Exporting…</>
-                    ) : (
-                        '📄 Download PDF Report'
-                    )}
-                </button>
-                <button onClick={() => handleExport('csv')} disabled={exportingCsv}
-                    className="px-6 py-3 rounded-xl text-sm font-bold cursor-pointer transition-all hover:scale-105 disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
-                    style={{ background: 'transparent', border: '1.5px solid rgba(26,110,168,0.4)', color: '#1A6EA8' }}>
-                    {exportingCsv ? (
-                        <><span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> Exporting…</>
-                    ) : (
-                        '📊 Download CSV'
-                    )}
-                </button>
-            </div>
-
-            {/* Toast */}
-            <Toast message={toast.message} type={toast.type}
-                isVisible={toast.visible}
-                onClose={() => setToast(prev => ({ ...prev, visible: false }))} />
+  return (
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Analytics</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Financial and operational insights across your fleet.</div>
         </div>
-    );
+        <div className="flex items-center gap-3">
+          <button className="ff-btn ff-btn-ghost h-10 px-4">
+            <Download size={16} /> Export CSV
+          </button>
+          <button className="ff-btn ff-btn-ghost h-10 px-4">
+            <Download size={16} /> Export PDF
+          </button>
+        </div>
+      </div>
+
+      <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+        <div className="ff-label" style={{ marginBottom: 10 }}>Filters</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <select className="ff-input h-11" value={range} onChange={(e) => setRange(e.target.value)}>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="12m">Last 12 months</option>
+          </select>
+          <select className="ff-input h-11" value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+            <option value="All">All Vehicles</option>
+            <option value="Truck-11">Truck-11</option>
+            <option value="Van-05">Van-05</option>
+            <option value="Bike-02">Bike-02</option>
+          </select>
+          <select className="ff-input h-11" value={region} onChange={(e) => setRegion(e.target.value)}>
+            <option value="All">All Regions</option>
+            <option value="West">West</option>
+            <option value="North">North</option>
+            <option value="East">East</option>
+            <option value="South">South</option>
+          </select>
+        </div>
+        <div style={{ marginTop: 10 }} className="text-[12px] text-slate-400 font-semibold flex items-center gap-2">
+          <Calendar size={14} /> {range} · <Filter size={14} /> {vehicle}/{region}
+        </div>
+      </div>
+
+      <DataTable
+        title="Vehicle ROI"
+        columns={columns}
+        rows={roiRows}
+        rowKey={(r) => r.id}
+        emptyTitle="No ROI data"
+        emptyMessage="Adjust filters to view ROI."
+        className="overflow-hidden"
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── Chart 1: Fuel Efficiency (horizontal bar with gradient) ── */}
+        <ChartCard title="Fuel Efficiency" subtitle="km / litre per vehicle">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={efficiency} layout="vertical" margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="fuelGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0.95} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="vehicle" tick={{ fill: '#CBD5E1', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} width={80} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+                cursor={{ fill: 'rgba(99,102,241,0.06)' }}
+              />
+              <Bar dataKey="kmpl" fill="url(#fuelGrad)" radius={[0, 8, 8, 0]} barSize={22} animationDuration={900} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* ── Chart 2: Fleet Utilization (gradient area) ── */}
+        <ChartCard title="Fleet Utilization" subtitle="Weekly on-trip ratio %">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={utilization} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="utilGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} domain={[50, 80]} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="u"
+                stroke="#8B5CF6"
+                fill="url(#utilGrad)"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#8B5CF6', stroke: '#1E293B', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#A78BFA', stroke: '#1E293B', strokeWidth: 2 }}
+                animationDuration={900}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* ── Chart 3: Cost Breakdown (stacked bar, dual color) ── */}
+        <ChartCard title="Cost Breakdown" subtitle="Fuel vs Maintenance (₹ lakh)">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={costBreakdown} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="fuelCostGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.7} />
+                </linearGradient>
+                <linearGradient id="maintCostGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#FBBF24" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.7} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="vehicle" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+                cursor={{ fill: 'rgba(56,189,248,0.06)' }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ paddingBottom: 8, fontSize: 11, color: '#94A3B8' }}
+              />
+              <Bar dataKey="fuel" name="Fuel" stackId="costs" fill="url(#fuelCostGrad)" radius={[0, 0, 0, 0]} barSize={28} animationDuration={900} />
+              <Bar dataKey="maintenance" name="Maintenance" stackId="costs" fill="url(#maintCostGrad)" radius={[6, 6, 0, 0]} barSize={28} animationDuration={900} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* ── Chart 4: Trip Volume (line + fill) ── */}
+        <ChartCard title="Trip Volume" subtitle="Weekly trip count">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={tripVolume} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="tripGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22C55E" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#22C55E" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} domain={[10, 35]} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="trips"
+                stroke="#22C55E"
+                fill="url(#tripGrad)"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#22C55E', stroke: '#1E293B', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#4ADE80', stroke: '#1E293B', strokeWidth: 2 }}
+                animationDuration={900}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children }) {
+  return (
+    <div className="ff-card" style={{ borderRadius: 16, padding: '20px 24px 24px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: '#F1F5F9', letterSpacing: '-0.01em' }}>{title}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#64748B', marginTop: 3 }}>{subtitle}</div>
+      </div>
+      <div style={{ flex: 1, width: '100%', minHeight: 260 }}>
+        {children}
+      </div>
+    </div>
+  );
 }

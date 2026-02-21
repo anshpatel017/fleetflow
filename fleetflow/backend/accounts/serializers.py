@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             full_name=validated_data.get('full_name', ''),
             phone=validated_data.get('phone', ''),
-            role=validated_data.get('role', 'manager'),
+            role=validated_data.get('role', CustomUser.FLEET_MANAGER),
         )
         return user
 
@@ -45,10 +45,11 @@ class LoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
+    id = serializers.UUIDField(source='user_id', read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'full_name', 'phone', 'profile_image', 'role')
+        fields = ('id', 'user_id', 'email', 'full_name', 'phone', 'profile_image')
 
     def update(self, instance, validated_data):
         instance.full_name = validated_data.get('full_name', instance.full_name)

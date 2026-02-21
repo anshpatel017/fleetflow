@@ -26,7 +26,7 @@ class RegisterView(APIView):
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "user": {
-                    "id": user.id,
+                    "id": str(user.user_id),
                     "email": user.email,
                     "full_name": user.full_name,
                     "role": user.role,
@@ -49,7 +49,7 @@ class LoginView(APIView):
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "user": {
-                    "id": user.id,
+                    "id": str(user.user_id),
                     "email": user.email,
                     "full_name": user.full_name,
                     "role": user.role,

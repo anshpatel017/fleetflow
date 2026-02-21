@@ -1,35 +1,41 @@
-const STATUS_CONFIG = {
-    // Trip statuses
-    draft: { label: 'Draft', bg: 'rgba(28,28,30,0.08)', text: '#6B7280', dot: '#6B7280' },
-    dispatched: { label: 'Dispatched', bg: 'rgba(59,159,212,0.15)', text: '#3B9FD4', dot: '#3B9FD4' },
-    on_way: { label: 'On Way', bg: 'rgba(212,80,10,0.15)', text: '#D4500A', dot: '#D4500A' },
-    completed: { label: 'Completed', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
-    cancelled: { label: 'Cancelled', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
+import React from 'react';
 
-    // Vehicle statuses
-    available: { label: 'Available', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
-    on_trip: { label: 'On Trip', bg: 'rgba(212,80,10,0.15)', text: '#D4500A', dot: '#D4500A' },
-    in_shop: { label: 'In Shop', bg: 'rgba(234,179,8,0.15)', text: '#CA8A04', dot: '#CA8A04' },
-    out_of_service: { label: 'Out of Service', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
-
-    // Maintenance statuses
-    open: { label: 'Open', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
-    resolved: { label: 'Resolved', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
-
-    // Driver statuses (on_trip reused from vehicle statuses above)
-    on_duty: { label: 'On Duty', bg: 'rgba(52,199,89,0.15)', text: '#34C759', dot: '#34C759' },
-    off_duty: { label: 'Off Duty', bg: 'rgba(28,28,30,0.07)', text: '#6B7280', dot: '#9CA3AF' },
-    suspended: { label: 'Suspended', bg: 'rgba(176,58,6,0.15)', text: '#B03A06', dot: '#B03A06' },
+const MAP = {
+  available:  { bg: 'rgba(20,83,45,0.19)', fg: '#22C55E', br: 'rgba(34,197,94,0.19)', label: 'Available' },
+  on_trip:    { bg: 'rgba(30,58,95,0.19)', fg: '#38BDF8', br: 'rgba(56,189,248,0.19)', label: 'On Trip', pulse: true },
+  in_shop:    { bg: 'rgba(120,53,15,0.19)', fg: '#F59E0B', br: 'rgba(245,158,11,0.19)', label: 'In Shop' },
+  retired:    { bg: '#1E293B', fg: '#475569', br: 'rgba(51,65,85,0.25)', label: 'Retired' },
+  on_duty:    { bg: 'rgba(20,83,45,0.19)', fg: '#22C55E', br: 'rgba(34,197,94,0.19)', label: 'On Duty' },
+  off_duty:   { bg: '#1E293B', fg: '#64748B', br: 'rgba(51,65,85,0.25)', label: 'Off Duty' },
+  suspended:  { bg: 'rgba(69,10,10,0.19)', fg: '#EF4444', br: 'rgba(239,68,68,0.19)', label: 'Suspended' },
+  draft:      { bg: '#1E293B', fg: '#64748B', br: 'rgba(51,65,85,0.25)', label: 'Draft' },
+  dispatched: { bg: 'rgba(30,58,95,0.19)', fg: '#38BDF8', br: 'rgba(56,189,248,0.19)', label: 'Dispatched', pulse: true },
+  completed:  { bg: 'rgba(20,83,45,0.19)', fg: '#22C55E', br: 'rgba(34,197,94,0.19)', label: 'Completed' },
+  cancelled:  { bg: 'rgba(69,10,10,0.19)', fg: '#EF4444', br: 'rgba(239,68,68,0.19)', label: 'Cancelled' },
 };
 
-export default function StatusPill({ status }) {
-    const config = STATUS_CONFIG[status] || { label: status, bg: 'rgba(244,242,238,0.1)', text: '#F4F2EE', dot: '#F4F2EE' };
+function normalize(status) {
+  if (!status) return 'draft';
+  return String(status).trim().toLowerCase().replaceAll(' ', '_');
+}
 
-    return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-            style={{ background: config.bg, color: config.text }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: config.dot }} />
-            {config.label}
-        </span>
-    );
+export default function StatusPill({ status }) {
+  const key = normalize(status);
+  const c = MAP[key] ?? { bg: '#1E293B', fg: '#64748B', br: 'rgba(51,65,85,0.25)', label: status ?? 'Unknown' };
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      borderRadius: 20, padding: '3px 10px',
+      fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+      fontFamily: 'var(--font-body)',
+      background: c.bg, color: c.fg, border: `1px solid ${c.br}`, lineHeight: 1.4,
+    }}>
+      <span
+        className={c.pulse ? 'status-dot-pulse' : ''}
+        style={{ width: 5, height: 5, borderRadius: '50%', background: c.fg, flexShrink: 0 }}
+      />
+      {c.label}
+    </span>
+  );
 }

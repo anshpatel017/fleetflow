@@ -1,18 +1,50 @@
-export default function KPICard({ title, value, icon, color, change }) {
-    return (
-        <div className="rounded-2xl p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-            style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-            <div className="flex items-start justify-between mb-3">
-                <span className="text-2xl">{icon}</span>
-                {change && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{ background: `${color}15`, color }}>
-                        {change}
-                    </span>
-                )}
-            </div>
-            <p className="text-3xl font-black tracking-tight" style={{ color }}>{value}</p>
-            <p className="text-xs font-medium mt-1" style={{ color: 'rgba(28,28,30,0.45)' }}>{title}</p>
+import React, { useEffect, useMemo, useState } from 'react';
+
+function useCountUp(value, durationMs = 900) {
+  const target = Number(value);
+  const [v, setV] = useState(Number.isFinite(target) ? 0 : value);
+  useEffect(() => {
+    if (!Number.isFinite(target)) { setV(value); return; }
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setV(Math.round(target * eased));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, durationMs, value]);
+  return v;
+}
+
+export default function KPICard({ label, value, color = '#6366F1', icon: Icon, sub, leftBorderColor }) {
+  const isNumber = useMemo(() => typeof value === 'number' && Number.isFinite(value), [value]);
+  const counted = useCountUp(isNumber ? value : value);
+
+  return (
+    <div className="ff-card ff-card-hover" style={{
+      padding: '24px 24px 22px',
+      borderLeft: `3px solid ${leftBorderColor ?? color}`,
+    }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 14 }}>
+        {label}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {Icon && (
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center',
+            background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)',
+          }}>
+            <Icon size={20} style={{ color }} />
+          </div>
+        )}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: 36, fontWeight: 800, color, letterSpacing: '-0.04em', lineHeight: 1 }}>
+            {isNumber ? counted : value}
+          </div>
+          {sub && <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{sub}</div>}
         </div>
-    );
+      </div>
+    </div>
+  );
 }

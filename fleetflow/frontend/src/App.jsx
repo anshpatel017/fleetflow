@@ -1,53 +1,49 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './pages/HomePage';
+import React from 'react';
+import AppLayout from './components/AppLayout';
+
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ProfilePage from './pages/ProfilePage';
-import DashboardLayout from './components/DashboardLayout';
 import DashboardPage from './pages/DashboardPage';
 import VehiclesPage from './pages/VehiclesPage';
 import TripsPage from './pages/TripsPage';
 import DriversPage from './pages/DriversPage';
 import MaintenancePage from './pages/MaintenancePage';
-import ExpensesPage from './pages/ExpensesPage';
+import FuelPage from './pages/FuelPage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import SettingsPage from './pages/SettingsPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import { FleetProvider } from './context/FleetContext';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) return (
+      <pre style={{ color: '#EF4444', background: '#0D1420', padding: 32, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 14 }}>
+        {this.state.error.message}{'\n'}{this.state.error.stack}
+      </pre>
+    );
+    return this.props.children;
+  }
+}
 
 export default function App() {
   return (
-    <FleetProvider>
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* Authenticated routes with sidebar layout */}
-        <Route element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/vehicles" element={<VehiclesPage />} />
-          <Route path="/trips" element={<TripsPage />} />
-          <Route path="/drivers" element={<DriversPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/expenses" element={<ExpensesPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Route>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
+        <Route path="/vehicles" element={<AppLayout><VehiclesPage /></AppLayout>} />
+        <Route path="/trips" element={<AppLayout><TripsPage /></AppLayout>} />
+        <Route path="/drivers" element={<AppLayout><DriversPage /></AppLayout>} />
+        <Route path="/maintenance" element={<AppLayout><MaintenancePage /></AppLayout>} />
+        <Route path="/fuel" element={<AppLayout><FuelPage /></AppLayout>} />
+        <Route path="/analytics" element={<AppLayout><AnalyticsPage /></AppLayout>} />
 
         {/* Catch-all → Home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
-    </FleetProvider>
+    </ErrorBoundary>
   );
 }

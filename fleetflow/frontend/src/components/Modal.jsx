@@ -1,34 +1,41 @@
-import { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
 
-export default function Modal({ isOpen, onClose, title, children, width = 'max-w-lg' }) {
-    if (!isOpen) return null;
+export default function Modal({ open, title, children, footer, onClose }) {
+  const panelRef = useRef(null);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={onClose}>
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [open, onClose]);
 
-            {/* Modal content */}
-            <div className={`relative ${width} w-full rounded-2xl p-6 md:p-8 fade-up max-h-[90vh] overflow-y-auto`}
-                style={{ background: '#2C2C2E', border: '1px solid rgba(244,242,238,0.08)' }}
-                onClick={e => e.stopPropagation()}>
+  if (!open) return null;
 
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-white tracking-tight">{title}</h2>
-                    <button onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors bg-transparent border-none text-lg"
-                        style={{ color: 'rgba(244,242,238,0.4)' }}
-                        onMouseEnter={e => e.target.style.background = 'rgba(244,242,238,0.1)'}
-                        onMouseLeave={e => e.target.style.background = 'transparent'}>
-                        ✕
-                    </button>
-                </div>
-
-                {/* Body */}
-                {children}
-            </div>
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+      <div ref={panelRef} className="ff-animate-modal" onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative', width: '100%', maxWidth: 520,
+          background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 16,
+          boxShadow: '0 25px 60px rgba(0,0,0,0.6)', zIndex: 1,
+        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', color: '#F1F5F9' }}>{title}</div>
+          <button className="ff-btn ff-btn-ghost" style={{ width: 32, height: 32, padding: 0 }} onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
         </div>
-    );
+        <div style={{ padding: '20px 24px', maxHeight: '60vh', overflowY: 'auto' }}>{children}</div>
+        {footer && (
+          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

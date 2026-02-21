@@ -1,255 +1,177 @@
-import { useState } from 'react';
-import StatusPill from '../components/StatusPill';
+import React, { useState } from 'react';
+import { Plus, AlertTriangle, Wrench } from 'lucide-react';
 import Modal from '../components/Modal';
-import Toast from '../components/Toast';
-import { useFleet } from '../context/FleetContext';
-
-const FILTERS = ['all', 'open', 'in_shop', 'resolved'];
-const FILTER_LABELS = { all: 'All', open: 'Open', in_shop: 'In Shop', resolved: 'Resolved' };
-
-const emptyLog = { vehicle: '', issue: '', date: '', cost: '', status: 'open' };
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
+import DataTable from '../components/DataTable';
+import StatusPill from '../components/StatusPill';
 
 export default function MaintenancePage() {
-    const { maintenanceLogs: logs, vehicles, addMaintenanceLog, resolveMaintenanceLog } = useFleet();
-    const [filter, setFilter] = useState('all');
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState(emptyLog);
-    const [formErrors, setFormErrors] = useState({});
+  const vehicles = [
+    { id: 1, name: 'Truck-11', status: 'available' },
+    { id: 2, name: 'Van-05', status: 'on_trip' },
+    { id: 3, name: 'Bike-02', status: 'available' },
+    { id: 4, name: 'Truck-07', status: 'in_shop' },
+    { id: 5, name: 'Van-01', status: 'retired' },
+  ];
 
-    // Toast
-    const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
-    const showToast = (message, type = 'success') => setToast({ visible: true, message, type });
+  const [logs, setLogs] = useState([
+    { id: 1, vehicleId: 4, type: 'Engine Repair', description: 'Oil leakage & gasket replacement', date: '2026-02-18', cost: 24000, odometerKm: 210901, status: 'in_shop' },
+    { id: 2, vehicleId: 1, type: 'Inspection', description: 'Quarterly inspection & compliance checklist', date: '2026-02-10', cost: 4500, odometerKm: 181920, status: 'completed' },
+    { id: 3, vehicleId: 2, type: 'Tire Service', description: 'Front left tire replaced', date: '2026-02-05', cost: 6200, odometerKm: 47810, status: 'completed' },
+  ]);
 
-    // Counts
-    const counts = {
-        all: logs.length,
-        open: logs.filter(l => l.status === 'open').length,
-        in_shop: logs.filter(l => l.status === 'in_shop').length,
-        resolved: logs.filter(l => l.status === 'resolved').length,
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ vehicleId: 4, type: 'Oil Change', description: '', date: '', cost: '', odometerKm: '', nextServiceKm: '' });
+
+  const totals = {
+    active: logs.filter(l => l.status === 'in_shop').length,
+    completedMonth: logs.filter(l => l.status === 'completed' && String(l.date).startsWith('2026-02')).length,
+    totalCost: logs.reduce((s, l) => s + (Number(l.cost) || 0), 0),
+  };
+
+  const openAdd = () => {
+    setEditing(null);
+    setForm({ vehicleId: 4, type: 'Oil Change', description: '', date: '', cost: '', odometerKm: '', nextServiceKm: '' });
+    setModalOpen(true);
+  };
+
+  const save = () => {
+    const payload = {
+      id: editing?.id ?? Math.max(...logs.map(l => l.id)) + 1,
+      vehicleId: Number(form.vehicleId),
+      type: form.type,
+      description: form.description,
+      date: form.date,
+      cost: Number(form.cost) || 0,
+      odometerKm: Number(form.odometerKm) || 0,
+      status: 'in_shop',
+      nextServiceKm: Number(form.nextServiceKm) || null,
     };
+    setLogs(prev => (editing ? prev.map(l => l.id === editing.id ? payload : l) : [payload, ...prev]));
+    setModalOpen(false);
+  };
 
-    const filtered = logs.filter(l => filter === 'all' || l.status === filter);
+  const columns = [
+    { id: 'vehicle', header: 'Vehicle', accessor: (r) => r.vehicleId, cell: (v) => <span className="text-[13px] font-semibold text-slate-200">{vehicles.find(x => x.id === v)?.name ?? '—'}</span> },
+    {
+      id: 'type', header: 'Service Type', accessor: 'type', cell: (v) => (
+        <span className="px-2 py-1 rounded-md text-[12px] font-semibold" style={{ background: 'rgba(14,165,233,0.10)', border: '1px solid rgba(14,165,233,0.25)', color: '#7DD3FC' }}>{v}</span>
+      )
+    },
+    { id: 'desc', header: 'Description', accessor: 'description', sortable: false, cell: (v) => <span className="text-[13px] text-slate-300">{String(v).length > 38 ? `${String(v).slice(0, 38)}…` : v}</span> },
+    { id: 'date', header: 'Date', accessor: 'date', cell: (v) => <span className="text-[13px] text-slate-300">{v}</span> },
+    { id: 'cost', header: 'Cost', accessor: 'cost', cell: (v) => <span className="ff-mono">₹{Number(v).toLocaleString()}</span> },
+    { id: 'odo', header: 'Odometer', accessor: 'odometerKm', cell: (v) => <span className="ff-mono">{Number(v).toLocaleString()}</span> },
+    { id: 'status', header: 'Status', accessor: 'status', sortable: false, cell: (v) => <StatusPill status={v === 'in_shop' ? 'in_shop' : v} /> },
+  ];
 
-    // ── Mark resolved ──
-    const handleResolve = (id) => {
-        resolveMaintenanceLog(id);
-        showToast('Maintenance log resolved — vehicle marked Available');
-    };
-
-    // ── Add log ──
-    const validate = () => {
-        const errs = {};
-        if (!form.vehicle) errs.vehicle = 'Select a vehicle';
-        if (!form.issue.trim()) errs.issue = 'Description is required';
-        if (!form.date) errs.date = 'Date is required';
-        if (!form.cost || Number(form.cost) <= 0) errs.cost = 'Must be a positive number';
-        setFormErrors(errs);
-        return Object.keys(errs).length === 0;
-    };
-
-    const handleSaveLog = (e) => {
-        e.preventDefault();
-        if (!validate()) return;
-
-        const newLog = {
-            id: Math.max(0, ...logs.map(l => l.id)) + 1,
-            vehicle: form.vehicle,
-            issue: form.issue.trim(),
-            date: form.date,
-            cost: Number(form.cost),
-            status: form.status,
-        };
-        addMaintenanceLog(newLog);
-        setForm(emptyLog);
-        setFormErrors({});
-        setShowModal(false);
-        showToast('Maintenance log saved — vehicle marked In Shop');
-    };
-
-    const openAddModal = () => {
-        setForm(emptyLog);
-        setFormErrors({});
-        setShowModal(true);
-    };
-
-    // ── Input helper ──
-    const inputStyle = (hasError) => ({
-        background: 'rgba(28,28,30,0.7)',
-        border: hasError ? '1.5px solid #B03A06' : '1.5px solid rgba(244,242,238,0.15)',
-        color: '#F4F2EE',
-        borderRadius: 10,
-    });
-
-    return (
-        <div className="flex flex-col gap-5 fade-up">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <h2 className="text-xl font-bold tracking-tight" style={{ color: '#1C1C1E' }}>Maintenance Logs</h2>
-                <button onClick={openAddModal}
-                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer transition-all hover:scale-105 border-none whitespace-nowrap"
-                    style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
-                    + Log Service
-                </button>
-            </div>
-
-            {/* Filter tabs */}
-            <div className="flex flex-wrap gap-2">
-                {FILTERS.map(f => (
-                    <button key={f} onClick={() => setFilter(f)}
-                        className="px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none"
-                        style={{
-                            background: filter === f ? '#D4500A' : '#F4F2EE',
-                            color: filter === f ? '#FFFFFF' : '#1C1C1E',
-                        }}>
-                        {FILTER_LABELS[f]} ({counts[f]})
-                    </button>
-                ))}
-            </div>
-
-            {/* Table */}
-            <div className="rounded-2xl shadow-sm overflow-hidden"
-                style={{ background: '#FFFFFF', border: '1px solid rgba(28,28,30,0.06)' }}>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                        <thead>
-                            <tr>
-                                {['Vehicle', 'Issue / Service Type', 'Date', 'Cost ($)', 'Status', 'Action'].map(h => (
-                                    <th key={h} className="text-[10px] font-bold uppercase tracking-wider px-5 py-3.5"
-                                        style={{ color: 'rgba(28,28,30,0.35)', borderBottom: '1px solid rgba(28,28,30,0.06)' }}>
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map(log => (
-                                <tr key={log.id} className="transition-colors"
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,159,212,0.03)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                    <td className="px-5 py-3.5 text-xs font-bold" style={{ color: '#1A6EA8' }}>{log.vehicle}</td>
-                                    <td className="px-5 py-3.5 text-xs font-medium" style={{ color: '#1C1C1E' }}>{log.issue}</td>
-                                    <td className="px-5 py-3.5 text-xs" style={{ color: 'rgba(28,28,30,0.5)' }}>{log.date}</td>
-                                    <td className="px-5 py-3.5 text-xs font-mono font-semibold" style={{ color: '#1C1C1E' }}>
-                                        ${log.cost.toLocaleString()}
-                                    </td>
-                                    <td className="px-5 py-3.5"><StatusPill status={log.status} /></td>
-                                    <td className="px-5 py-3.5">
-                                        {log.status !== 'resolved' ? (
-                                            <button onClick={() => handleResolve(log.id)}
-                                                className="text-[11px] font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all hover:scale-105"
-                                                style={{ background: 'transparent', border: '1.5px solid #3B9FD4', color: '#3B9FD4' }}>
-                                                Mark Resolved
-                                            </button>
-                                        ) : (
-                                            <span className="text-[11px]" style={{ color: 'rgba(28,28,30,0.25)' }}>—</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {filtered.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-12 text-sm" style={{ color: 'rgba(28,28,30,0.3)' }}>
-                                        No maintenance logs found
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* ── Log Service Modal ── */}
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Log Service">
-                <form onSubmit={handleSaveLog} className="flex flex-col gap-4">
-                    {/* Vehicle dropdown */}
-                    <div>
-                        <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
-                            style={{ color: 'rgba(244,242,238,0.5)' }}>Vehicle</label>
-                        <select value={form.vehicle}
-                            onChange={e => setForm({ ...form, vehicle: e.target.value })}
-                            className="w-full px-4 py-3 text-sm outline-none cursor-pointer font-medium"
-                            style={{ ...inputStyle(formErrors.vehicle), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23F4F2EE' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center' }}>
-                            <option value="" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>Select vehicle…</option>
-                            {vehicles.map(v => (
-                                <option key={v.id} value={v.plate} style={{ background: '#1C1C1E', color: '#F4F2EE' }}>
-                                    {v.plate} — {v.model}
-                                </option>
-                            ))}
-                        </select>
-                        {formErrors.vehicle && <p className="text-[11px] mt-1 font-medium" style={{ color: '#B03A06' }}>{formErrors.vehicle}</p>}
-                    </div>
-
-                    {/* Issue description */}
-                    <div>
-                        <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
-                            style={{ color: 'rgba(244,242,238,0.5)' }}>Issue / Service Description</label>
-                        <textarea placeholder="Describe the issue or service…" rows={3} required
-                            value={form.issue}
-                            onChange={e => setForm({ ...form, issue: e.target.value })}
-                            className="w-full px-4 py-3 text-sm outline-none resize-y font-medium"
-                            style={{ ...inputStyle(formErrors.issue), fontFamily: 'inherit', minHeight: 80 }} />
-                        {formErrors.issue && <p className="text-[11px] mt-1 font-medium" style={{ color: '#B03A06' }}>{formErrors.issue}</p>}
-                    </div>
-
-                    {/* Date + Cost */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
-                                style={{ color: 'rgba(244,242,238,0.5)' }}>Service Date</label>
-                            <input type="date" required
-                                value={form.date}
-                                onChange={e => setForm({ ...form, date: e.target.value })}
-                                className="w-full px-4 py-3 text-sm outline-none font-medium"
-                                style={{ ...inputStyle(formErrors.date), colorScheme: 'dark' }} />
-                            {formErrors.date && <p className="text-[11px] mt-1 font-medium" style={{ color: '#B03A06' }}>{formErrors.date}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
-                                style={{ color: 'rgba(244,242,238,0.5)' }}>Estimated Cost ($)</label>
-                            <input type="number" placeholder="0" required min="1"
-                                value={form.cost}
-                                onChange={e => setForm({ ...form, cost: e.target.value })}
-                                className="w-full px-4 py-3 text-sm outline-none font-medium"
-                                style={inputStyle(formErrors.cost)} />
-                            {formErrors.cost && <p className="text-[11px] mt-1 font-medium" style={{ color: '#B03A06' }}>{formErrors.cost}</p>}
-                        </div>
-                    </div>
-
-                    {/* Initial status */}
-                    <div>
-                        <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
-                            style={{ color: 'rgba(244,242,238,0.5)' }}>Initial Status</label>
-                        <select value={form.status}
-                            onChange={e => setForm({ ...form, status: e.target.value })}
-                            className="w-full px-4 py-3 text-sm outline-none cursor-pointer font-medium"
-                            style={{ ...inputStyle(false), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23F4F2EE' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center' }}>
-                            <option value="open" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>Open</option>
-                            <option value="in_shop" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>In Shop</option>
-                        </select>
-                    </div>
-
-                    {/* Warning note */}
-                    <div className="flex gap-2.5 p-3 rounded-xl"
-                        style={{ background: 'rgba(212,80,10,0.08)', border: '1px solid rgba(212,80,10,0.15)' }}>
-                        <span className="text-sm mt-0.5">⚠️</span>
-                        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(244,242,238,0.6)' }}>
-                            Logging a service will mark this vehicle as <strong style={{ color: '#D4500A' }}>IN_SHOP</strong> and remove it from the dispatcher pool.
-                        </p>
-                    </div>
-
-                    {/* Button */}
-                    <button type="submit"
-                        className="w-full py-3 rounded-xl text-sm font-bold text-white cursor-pointer border-none transition-all hover:scale-[1.02] mt-1"
-                        style={{ background: 'linear-gradient(135deg, #D4500A, #B03A06)' }}>
-                        Save Log
-                    </button>
-                </form>
-            </Modal>
-
-            {/* Toast */}
-            <Toast message={toast.message} type={toast.type}
-                isVisible={toast.visible}
-                onClose={() => setToast(prev => ({ ...prev, visible: false }))} />
+  return (
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Maintenance Logs</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Track service logs, costs, and vehicle health.</div>
         </div>
-    );
+        <button className="ff-btn ff-btn-primary h-11 px-5" onClick={openAdd}>
+          <Plus size={16} /> Add Service Log
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <MiniStat label="Active Services" value={totals.active} />
+        <MiniStat label="Completed This Month" value={totals.completedMonth} />
+        <MiniStat label="Total Maintenance Cost" value={`₹${totals.totalCost.toLocaleString()}`} />
+      </div>
+
+      <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+        <div className="ff-label mb-3">Vehicle Health</div>
+        <div className="flex flex-wrap gap-3">
+          {vehicles.map(v => (
+            <span
+              key={v.id}
+              className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+              style={{
+                background: v.status === 'available' ? 'rgba(34,197,94,0.10)' : v.status === 'in_shop' ? 'rgba(245,158,11,0.12)' : v.status === 'retired' ? 'rgba(100,116,139,0.14)' : 'rgba(56,189,248,0.10)',
+                border: '1px solid rgba(51,65,85,0.85)',
+                color: '#E2E8F0',
+              }}
+            >
+              {v.name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="ff-card p-1" style={{ borderRadius: 16 }}>
+        <div className="p-5">
+          <div className="text-[15px] font-bold text-slate-100">Service Logs</div>
+          <div className="text-[13px] text-slate-400" style={{ marginTop: 4 }}>In Shop rows show amber highlight.</div>
+        </div>
+        <div className="px-5 pb-5">
+          <DataTable
+            columns={columns}
+            rows={logs}
+            rowKey={(r) => r.id}
+            searchable
+            emptyTitle="No maintenance logs"
+            emptyMessage="Add your first service log to track vehicle health."
+          />
+        </div>
+      </div>
+
+      <Modal
+        open={modalOpen}
+        title={editing ? 'Edit Service Log' : 'Add Service Log'}
+        onClose={() => setModalOpen(false)}
+        footer={
+          <>
+            <button className="ff-btn ff-btn-ghost h-11 px-5" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="ff-btn ff-btn-primary h-11 px-5" onClick={save}>Save</button>
+          </>
+        }
+      >
+        <div className="rounded-xl px-3 py-2 mb-4 flex items-start gap-2" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <AlertTriangle size={16} className="text-amber-300 mt-0.5" />
+          <div className="text-[13px] text-slate-200 font-semibold">
+            Adding this log will automatically change vehicle status to In Shop
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormSelect label="Vehicle" value={form.vehicleId} onChange={(e) => setForm(p => ({ ...p, vehicleId: e.target.value }))}>
+            {vehicles.map(v => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </FormSelect>
+          <FormSelect label="Service Type" value={form.type} onChange={(e) => setForm(p => ({ ...p, type: e.target.value }))}>
+            <option>Oil Change</option>
+            <option>Inspection</option>
+            <option>Tire Service</option>
+            <option>Brakes</option>
+            <option>Engine Repair</option>
+            <option>Other</option>
+          </FormSelect>
+
+          <div className="md:col-span-2">
+            <FormInput label="Description" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Describe service" />
+          </div>
+          <FormInput label="Service Date" type="date" value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} />
+          <FormInput label="Cost" mono type="number" value={form.cost} onChange={(e) => setForm(p => ({ ...p, cost: e.target.value }))} />
+          <FormInput label="Odometer at Service" mono type="number" value={form.odometerKm} onChange={(e) => setForm(p => ({ ...p, odometerKm: e.target.value }))} />
+          <FormInput label="Next Service (km)" mono type="number" value={form.nextServiceKm} onChange={(e) => setForm(p => ({ ...p, nextServiceKm: e.target.value }))} />
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="ff-card ff-card-hover p-6" style={{ borderRadius: 16 }}>
+      <div className="ff-label">{label}</div>
+      <div style={{ marginTop: 10, fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800, color: '#F1F5F9' }}>{value}</div>
+    </div>
+  );
 }
