@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from accounts.permissions import IsSafetyOfficer
+from accounts.permissions import IsSafetyOfficer, IsSafetyOfficerOrDispatcher
 from .models import Driver
 from .serializers import DriverSerializer
 
@@ -17,6 +17,19 @@ class DriverViewSet(viewsets.ModelViewSet):
     permission_classes = [IsSafetyOfficer]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status']
+
+    def get_permissions(self):
+        """Allow dispatchers and safety officers to list/retrieve drivers."""
+        if self.action in ('list', 'retrieve', 'on_duty'):
+            return [IsSafetyOfficerOrDispatcher()]
+        return super().get_permissions()
+
+    @action(detail=False, methods=['get'])
+    def on_duty(self, request):
+        """Returns only drivers with status='on_duty'."""
+        drivers = Driver.objects.select_related('user').filter(status='on_duty')
+        serializer = self.get_serializer(drivers, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='expiring-soon')
     def expiring_soon(self, request):

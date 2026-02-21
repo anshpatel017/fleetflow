@@ -39,3 +39,12 @@ class IsManagerOrReadOnly(BasePermission):
         if request.user.role == 'manager':
             return True
         return request.method in SAFE_METHODS
+
+
+class IsSafetyOfficerOrDispatcher(BasePermission):
+    """Read access for safety officers and dispatchers (and managers)."""
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and request.user.role in ('manager', 'safety_officer', 'dispatcher')
+        )
