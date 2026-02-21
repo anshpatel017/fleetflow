@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import { mockExpenses, mockTrips, mockDrivers, mockVehicles } from '../data/mockData';
+import { useFleet } from '../context/FleetContext';
 
 export default function ExpensesPage() {
-    const [expenses, setExpenses] = useState(mockExpenses);
+    const { expenses, trips, addExpense } = useFleet();
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ tripId: '', fuelL: '', fuelCost: '', misc: '', date: '', notes: '' });
     const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -18,7 +18,7 @@ export default function ExpensesPage() {
     }, [expenses]);
 
     // Trips suitable for expense logging (active or completed)
-    const eligibleTrips = mockTrips.filter(t => ['completed', 'dispatched', 'on_way'].includes(t.status));
+    const eligibleTrips = trips.filter(t => ['completed', 'dispatched', 'on_way'].includes(t.status));
 
     // Auto-populate from selected trip
     const selectedTrip = eligibleTrips.find(t => t.id === form.tripId);
@@ -42,7 +42,7 @@ export default function ExpensesPage() {
             notes: form.notes,
             status: 'logged',
         };
-        setExpenses(prev => [expense, ...prev]);
+        addExpense(expense);
         resetForm();
         showToast('Expense logged successfully');
     };

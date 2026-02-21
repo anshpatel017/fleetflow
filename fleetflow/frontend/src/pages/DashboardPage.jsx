@@ -1,39 +1,10 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import KPICard from '../components/KPICard';
 import StatusPill from '../components/StatusPill';
-import { mockTrips, mockAlerts, fuelCostData } from '../data/mockData';
-
-const kpis = [
-    {
-        label: 'Total Vehicles',
-        value: '24',
-        icon: '🚛',
-        change: '+2 this month',
-        color: '#1A6EA8',
-    },
-    {
-        label: 'Active Trips',
-        value: '7',
-        icon: '🗺️',
-        change: '3 dispatched',
-        color: '#D4500A',
-    },
-    {
-        label: 'Drivers On Duty',
-        value: '12',
-        icon: '👤',
-        change: '6 on route',
-        color: '#3B9FD4',
-    },
-    {
-        label: 'Monthly Fuel Cost',
-        value: '$14,200',
-        icon: '⛽',
-        change: '+4.4% vs last month',
-        color: '#B03A06',
-    },
-];
+import { mockAlerts, fuelCostData } from '../data/mockData';
+import { useFleet } from '../context/FleetContext';
 
 function CustomTooltip({ active, payload, label }) {
     if (!active || !payload?.length) return null;
@@ -47,7 +18,21 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function DashboardPage() {
-    const recentTrips = mockTrips.slice(0, 5);
+    const { vehicles, drivers, trips, expenses } = useFleet();
+
+    const kpis = useMemo(() => {
+        const activeTrips = trips.filter(t => ['dispatched', 'on_way'].includes(t.status));
+        const driversOnDuty = drivers.filter(d => d.status === 'on_duty' || d.status === 'on_trip');
+        const totalFuel = expenses.reduce((sum, e) => sum + e.fuelCost, 0);
+        return [
+            { label: 'Total Vehicles', value: String(vehicles.length), icon: '🚛', change: `${vehicles.filter(v => v.status === 'available').length} available`, color: '#1A6EA8' },
+            { label: 'Active Trips', value: String(activeTrips.length), icon: '🗺️', change: `${trips.filter(t => t.status === 'dispatched').length} dispatched`, color: '#D4500A' },
+            { label: 'Drivers On Duty', value: String(driversOnDuty.length), icon: '👤', change: `${drivers.filter(d => d.status === 'on_trip').length} on route`, color: '#3B9FD4' },
+            { label: 'Total Fuel Cost', value: `$${totalFuel.toLocaleString()}`, icon: '⛽', change: `${expenses.length} logs`, color: '#B03A06' },
+        ];
+    }, [vehicles, drivers, trips, expenses]);
+
+    const recentTrips = trips.slice(0, 5);
 
     return (
         <div className="flex flex-col gap-6 fade-up">

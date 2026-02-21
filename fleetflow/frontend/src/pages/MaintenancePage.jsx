@@ -2,7 +2,7 @@ import { useState } from 'react';
 import StatusPill from '../components/StatusPill';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import { mockMaintenanceLogs, mockVehicles } from '../data/mockData';
+import { useFleet } from '../context/FleetContext';
 
 const FILTERS = ['all', 'open', 'in_shop', 'resolved'];
 const FILTER_LABELS = { all: 'All', open: 'Open', in_shop: 'In Shop', resolved: 'Resolved' };
@@ -10,7 +10,7 @@ const FILTER_LABELS = { all: 'All', open: 'Open', in_shop: 'In Shop', resolved: 
 const emptyLog = { vehicle: '', issue: '', date: '', cost: '', status: 'open' };
 
 export default function MaintenancePage() {
-    const [logs, setLogs] = useState(mockMaintenanceLogs);
+    const { maintenanceLogs: logs, vehicles, addMaintenanceLog, resolveMaintenanceLog } = useFleet();
     const [filter, setFilter] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState(emptyLog);
@@ -32,7 +32,7 @@ export default function MaintenancePage() {
 
     // ── Mark resolved ──
     const handleResolve = (id) => {
-        setLogs(prev => prev.map(l => l.id === id ? { ...l, status: 'resolved' } : l));
+        resolveMaintenanceLog(id);
         showToast('Maintenance log resolved — vehicle marked Available');
     };
 
@@ -59,7 +59,7 @@ export default function MaintenancePage() {
             cost: Number(form.cost),
             status: form.status,
         };
-        setLogs(prev => [newLog, ...prev]);
+        addMaintenanceLog(newLog);
         setForm(emptyLog);
         setFormErrors({});
         setShowModal(false);
@@ -170,7 +170,7 @@ export default function MaintenancePage() {
                             className="w-full px-4 py-3 text-sm outline-none cursor-pointer font-medium"
                             style={{ ...inputStyle(formErrors.vehicle), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23F4F2EE' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center' }}>
                             <option value="" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>Select vehicle…</option>
-                            {mockVehicles.map(v => (
+                            {vehicles.map(v => (
                                 <option key={v.id} value={v.plate} style={{ background: '#1C1C1E', color: '#F4F2EE' }}>
                                     {v.plate} — {v.model}
                                 </option>

@@ -3,7 +3,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import StatusPill from '../components/StatusPill';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import { mockDrivers as initialDrivers } from '../data/mockData';
+import { useFleet } from '../context/FleetContext';
 
 function getSafetyColor(score) {
     if (score >= 80) return { bg: 'rgba(52,199,89,0.12)', text: '#34C759' };
@@ -51,12 +51,12 @@ const STATUS_ACTIONS = {
 };
 
 export default function DriversPage() {
-    const [drivers, setDrivers] = useState(initialDrivers);
+    const { drivers, addDriver: ctxAddDriver, updateDriverStatus } = useFleet();
     const [view, setView] = useState('grid'); // 'grid' | 'table'
 
     // Add Driver modal
     const [showAddModal, setShowAddModal] = useState(false);
-    const [addForm, setAddForm] = useState({ name: '', licenseNo: '', role: 'Delivery', licenseExpiry: '', phone: '' });
+    const [addForm, setAddForm] = useState({ name: '', licenseNo: '', role: 'Delivery', licenseExpiry: '', phone: '', status: 'on_duty' });
 
     // Profile modal
     const [profileDriver, setProfileDriver] = useState(null);
@@ -79,7 +79,7 @@ export default function DriversPage() {
     }, []);
 
     const updateStatus = (driverId, newStatus) => {
-        setDrivers(prev => prev.map(d => d.id === driverId ? { ...d, status: newStatus } : d));
+        updateDriverStatus(driverId, newStatus);
         setOpenDropdownId(null);
         const label = newStatus === 'on_duty' ? 'On Duty' : newStatus === 'off_duty' ? 'Off Duty' : 'Suspended';
         showToast(`Driver status → ${label}`);
@@ -89,7 +89,7 @@ export default function DriversPage() {
         e.preventDefault();
         const initials = addForm.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         const driver = {
-            id: drivers.length + 1,
+            id: Math.max(0, ...drivers.map(d => d.id)) + 1,
             name: addForm.name,
             initials,
             licenseNo: addForm.licenseNo,
@@ -98,14 +98,14 @@ export default function DriversPage() {
             completion: 0,
             complaints: 0,
             licenseExpiry: addForm.licenseExpiry,
-            status: 'off_duty',
+            status: addForm.status,
             phone: addForm.phone,
             tripHistory: [],
             complaintsLog: [],
             safetyHistory: [75],
         };
-        setDrivers(prev => [driver, ...prev]);
-        setAddForm({ name: '', licenseNo: '', role: 'Delivery', licenseExpiry: '', phone: '' });
+        ctxAddDriver(driver);
+        setAddForm({ name: '', licenseNo: '', role: 'Delivery', licenseExpiry: '', phone: '', status: 'on_duty' });
         setShowAddModal(false);
         showToast('Driver added successfully');
     };
@@ -358,13 +358,20 @@ export default function DriversPage() {
                                 onChange={e => setAddForm(f => ({ ...f, licenseExpiry: e.target.value }))} className="fleet-input cursor-pointer" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                         <div>
                             <label className="block text-xs font-semibold mb-2 tracking-wide uppercase" style={{ color: 'rgba(244,242,238,0.5)' }}>Role</label>
                             <select value={addForm.role} onChange={e => setAddForm(f => ({ ...f, role: e.target.value }))} className="fleet-input cursor-pointer">
                                 {['Delivery', 'City Routes', 'Long Haul'].map(r => (
                                     <option key={r} value={r} style={{ background: '#1C1C1E', color: '#F4F2EE' }}>{r}</option>
                                 ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold mb-2 tracking-wide uppercase" style={{ color: 'rgba(244,242,238,0.5)' }}>Initial Status</label>
+                            <select value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))} className="fleet-input cursor-pointer">
+                                <option value="on_duty" style={{ background: '#1C1C1E', color: '#34C759' }}>On Duty</option>
+                                <option value="off_duty" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>Off Duty</option>
                             </select>
                         </div>
                         <div>

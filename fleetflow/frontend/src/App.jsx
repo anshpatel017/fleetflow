@@ -14,9 +14,11 @@ import ExpensesPage from './pages/ExpensesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import { FleetProvider } from './context/FleetContext';
 
 export default function App() {
   return (
+    <FleetProvider>
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
@@ -46,5 +48,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </FleetProvider>
   );
 }

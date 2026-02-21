@@ -3,7 +3,7 @@ import StatusPill from '../components/StatusPill';
 import SlideDrawer from '../components/SlideDrawer';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import { mockVehicles } from '../data/mockData';
+import { useFleet } from '../context/FleetContext';
 
 const FILTERS = ['all', 'available', 'on_trip', 'in_shop', 'out_of_service'];
 const FILTER_LABELS = { all: 'All', available: 'Available', on_trip: 'On Trip', in_shop: 'In Shop', out_of_service: 'Out of Service' };
@@ -12,7 +12,7 @@ const TYPES = ['Truck', 'Van', 'Pickup', 'Trailer'];
 const emptyForm = { plate: '', model: '', type: 'Truck', capacity: '', odometer: '', status: 'available' };
 
 export default function VehiclesPage() {
-    const [vehicles, setVehicles] = useState(mockVehicles);
+    const { vehicles, addVehicle, updateVehicle, removeVehicle } = useFleet();
     const [filter, setFilter] = useState('all');
 
     // Drawer state
@@ -79,15 +79,14 @@ export default function VehiclesPage() {
         if (!validate()) return;
 
         if (editingId) {
-            setVehicles(prev => prev.map(v => v.id === editingId ? {
-                ...v,
+            updateVehicle(editingId, {
                 plate: form.plate.trim().toUpperCase(),
                 model: form.model.trim(),
                 type: form.type,
                 capacity: Number(form.capacity),
                 odometer: Number(form.odometer) || 0,
                 status: form.status,
-            } : v));
+            });
             showToast('Vehicle updated successfully');
         } else {
             const newV = {
@@ -99,7 +98,7 @@ export default function VehiclesPage() {
                 status: 'available',
                 odometer: Number(form.odometer) || 0,
             };
-            setVehicles(prev => [newV, ...prev]);
+            addVehicle(newV);
             showToast('Vehicle added successfully');
         }
         closeDrawer();
@@ -108,7 +107,7 @@ export default function VehiclesPage() {
     // ── Retire ──
     const confirmRetire = () => {
         if (!retireTarget) return;
-        setVehicles(prev => prev.filter(v => v.id !== retireTarget.id));
+        removeVehicle(retireTarget.id);
         setRetireTarget(null);
         showToast('Vehicle retired successfully');
     };

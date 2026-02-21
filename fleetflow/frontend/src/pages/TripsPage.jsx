@@ -3,8 +3,7 @@ import StatusPill from '../components/StatusPill';
 import Modal from '../components/Modal';
 import SlideDrawer from '../components/SlideDrawer';
 import Toast from '../components/Toast';
-import { mockTrips, mockVehicles, mockExpenses } from '../data/mockData';
-import { getOnDutyDrivers } from '../api/drivers';
+import { useFleet } from '../context/FleetContext';
 
 const TABS = ['all', 'draft', 'dispatched', 'on_way', 'completed', 'cancelled'];
 const TAB_LABELS = { all: 'All', draft: 'Draft', dispatched: 'Dispatched', on_way: 'On Way', completed: 'Completed', cancelled: 'Cancelled' };
@@ -34,7 +33,7 @@ function isExpiringSoon(dateStr) {
 }
 
 export default function TripsPage() {
-    const [trips, setTrips] = useState(mockTrips);
+    const { trips, vehicles, expenses, availableVehicles, onDutyDrivers, addTrip, updateTripStatus } = useFleet();
     const [tab, setTab] = useState('all');
 
     // Modal state
@@ -52,30 +51,6 @@ export default function TripsPage() {
     // Toast
     const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
     const showToast = (message, type = 'success') => setToast({ visible: true, message, type });
-
-    // Dynamic driver state
-    const [onDutyDrivers, setOnDutyDrivers] = useState([]);
-    const [driversLoading, setDriversLoading] = useState(false);
-
-    const availableVehicles = mockVehicles.filter(v => v.status === 'available');
-
-    // Fetch on-duty drivers from API when modal opens
-    useEffect(() => {
-        if (!showModal) return;
-        let cancelled = false;
-        setDriversLoading(true);
-        getOnDutyDrivers()
-            .then(data => {
-                if (!cancelled) setOnDutyDrivers(data);
-            })
-            .catch(() => {
-                if (!cancelled) showToast('Failed to load drivers', 'error');
-            })
-            .finally(() => {
-                if (!cancelled) setDriversLoading(false);
-            });
-        return () => { cancelled = true; };
-    }, [showModal]);
 
     const counts = {};
     TABS.forEach(t => { counts[t] = t === 'all' ? trips.length : trips.filter(tr => tr.status === t).length; });
@@ -128,7 +103,7 @@ export default function TripsPage() {
             vehicleId: vehicle.id,
             vehicle: vehicle.plate,
             driverId: driver.id,
-            driver: driver.user_full_name,
+            driver: driver.name,
             cargo: Number(form.cargo),
             origin: form.origin,
             destination: form.destination,
@@ -137,7 +112,7 @@ export default function TripsPage() {
             date: new Date().toISOString().split('T')[0],
             notes: form.notes,
         };
-        setTrips(prev => [trip, ...prev]);
+        addTrip(trip);
         resetForm();
         showToast(asDraft ? 'Trip saved as draft' : 'Trip dispatched successfully');
     };
@@ -150,7 +125,7 @@ export default function TripsPage() {
 
     // ── Status update ──
     const updateStatus = (tripId, nextStatus) => {
-        setTrips(prev => prev.map(t => t.id === tripId ? { ...t, status: nextStatus } : t));
+        updateTripStatus(tripId, nextStatus);
         setOpenDropdownId(null);
         showToast(`Trip ${tripId} → ${nextStatus.replace('_', ' ').toUpperCase()}`);
     };
@@ -158,7 +133,7 @@ export default function TripsPage() {
     const isFormValid = form.vehicleId && form.driverId && form.cargo && form.origin && form.destination && !cargoError && Number(form.cargo) > 0;
 
     // Trip linked expenses for detail panel
-    const getLinkedExpenses = (tripId) => mockExpenses.filter(e => e.tripId === tripId);
+    const getLinkedExpenses = (tripId) => expenses.filter(e => e.tripId === tripId);
 
     return (
         <div className="flex flex-col gap-5 fade-up">
@@ -296,23 +271,25 @@ export default function TripsPage() {
                             style={{ color: 'rgba(244,242,238,0.5)' }}>Driver (On Duty only)</label>
                         <select value={form.driverId} required
                             onChange={e => setForm(f => ({ ...f, driverId: e.target.value }))}
-                            className="fleet-input cursor-pointer"
-                            disabled={driversLoading}>
+                            className="fleet-input cursor-pointer">
                             <option value="" style={{ background: '#1C1C1E', color: '#F4F2EE' }}>
-                                {driversLoading ? 'Loading drivers…' : 'Select a driver…'}
+                                {onDutyDrivers.length === 0 ? 'No on-duty drivers available' : 'Select a driver…'}
                             </option>
                             {onDutyDrivers.map(d => {
-                                const expiring = isExpiringSoon(d.license_expiry);
+                                const expiring = isExpiringSoon(d.licenseExpiry);
                                 return (
                                     <option key={d.id} value={d.id} style={{ background: '#1C1C1E', color: expiring ? '#D4500A' : '#F4F2EE' }}>
-                                        {d.user_full_name} — Lic: {d.license_number} (exp {d.license_expiry}){expiring ? ' ⚠ EXPIRING' : ''}
+                                        {d.name} — Lic: {d.licenseNo} (exp {d.licenseExpiry}){expiring ? ' ⚠ EXPIRING' : ''}
                                     </option>
                                 );
                             })}
                         </select>
+                        {onDutyDrivers.length === 0 && (
+                            <p className="text-[11px] mt-1.5 font-medium" style={{ color: '#D4500A' }}>
+                                No drivers are on duty. Go to Drivers page and set a driver's status to "On Duty" first.
+                            </p>
+                        )}
                     </div>
-
-                    {/* Cargo Weight */}
                     <div>
                         <label className="block text-xs font-semibold mb-2 tracking-wide uppercase"
                             style={{ color: 'rgba(244,242,238,0.5)' }}>Cargo Weight (kg)</label>
