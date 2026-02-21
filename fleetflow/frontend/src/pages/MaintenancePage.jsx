@@ -68,26 +68,26 @@ export default function MaintenancePage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Maintenance Logs</div>
-          <div className="text-[13px] text-slate-400">Track service logs, costs, and vehicle health.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Maintenance Logs</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Track service logs, costs, and vehicle health.</div>
         </div>
-        <button className="ff-btn ff-btn-primary h-10 px-4" onClick={openAdd}>
+        <button className="ff-btn ff-btn-primary h-11 px-5" onClick={openAdd}>
           <Plus size={16} /> Add Service Log
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <MiniStat label="Active Services" value={totals.active} />
         <MiniStat label="Completed This Month" value={totals.completedMonth} />
         <MiniStat label="Total Maintenance Cost" value={`₹${totals.totalCost.toLocaleString()}`} />
       </div>
 
-      <div className="ff-card p-4" style={{ borderRadius: 16 }}>
+      <div className="ff-card p-5" style={{ borderRadius: 16 }}>
         <div className="ff-label mb-3">Vehicle Health</div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {vehicles.map(v => (
             <span
               key={v.id}
@@ -105,11 +105,11 @@ export default function MaintenancePage() {
       </div>
 
       <div className="ff-card p-1" style={{ borderRadius: 16 }}>
-        <div className="p-4">
-          <div className="text-[14px] font-bold text-slate-100">Service Logs</div>
-          <div className="text-[12px] text-slate-400">In Shop rows show amber highlight.</div>
+        <div className="p-5">
+          <div className="text-[15px] font-bold text-slate-100">Service Logs</div>
+          <div className="text-[13px] text-slate-400" style={{ marginTop: 4 }}>In Shop rows show amber highlight.</div>
         </div>
-        <div className="px-4 pb-4">
+        <div className="px-5 pb-5">
           <DataTable
             columns={columns}
             rows={logs}
@@ -127,8 +127,8 @@ export default function MaintenancePage() {
         onClose={() => setModalOpen(false)}
         footer={
           <>
-            <button className="ff-btn ff-btn-ghost h-10 px-4" onClick={() => setModalOpen(false)}>Cancel</button>
-            <button className="ff-btn ff-btn-primary h-10 px-4" onClick={save}>Save</button>
+            <button className="ff-btn ff-btn-ghost h-11 px-5" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button className="ff-btn ff-btn-primary h-11 px-5" onClick={save}>Save</button>
           </>
         }
       >
@@ -169,9 +169,9 @@ export default function MaintenancePage() {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="ff-card ff-card-hover p-5" style={{ borderRadius: 16 }}>
+    <div className="ff-card ff-card-hover p-6" style={{ borderRadius: 16 }}>
       <div className="ff-label">{label}</div>
-      <div className="mt-2 text-[22px] font-extrabold text-slate-100">{value}</div>
+      <div style={{ marginTop: 10, fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800, color: '#F1F5F9' }}>{value}</div>
     </div>
   );
 }

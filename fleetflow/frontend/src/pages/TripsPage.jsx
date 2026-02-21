@@ -66,7 +66,7 @@ export default function TripsPage() {
         return (
           <div>
             <div className="text-[13px] font-semibold text-slate-200">{v?.name ?? '—'}</div>
-            <div className="text-[12px] text-slate-400">{d?.name ?? '—'}</div>
+            <div className="text-[12px] text-slate-400" style={{ marginTop: 3 }}>{d?.name ?? '—'}</div>
           </div>
         );
       }
@@ -87,24 +87,24 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Trip Dispatcher</div>
-          <div className="text-[13px] text-slate-400">Dispatch routes, assign vehicles and drivers.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Trip Dispatcher</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Dispatch routes, assign vehicles and drivers.</div>
         </div>
-        <button className="ff-btn ff-btn-primary h-10 px-4" onClick={() => setPanelOpen(true)}>
+        <button className="ff-btn ff-btn-primary h-11 px-5" onClick={() => setPanelOpen(true)}>
           Create Trip
         </button>
       </div>
 
-      <div className="ff-card p-3" style={{ borderRadius: 16 }}>
-        <div className="flex flex-wrap gap-2">
+      <div className="ff-card p-4" style={{ borderRadius: 16 }}>
+        <div className="flex flex-wrap gap-3">
           {['All', 'draft', 'dispatched', 'completed', 'cancelled'].map(s => (
             <button
               key={s}
               onClick={() => setTab(s)}
-              className="px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors"
+              className="px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
               style={{
                 background: tab === s ? 'rgba(99,102,241,0.18)' : 'transparent',
                 border: '1px solid rgba(51,65,85,0.8)',
@@ -193,14 +193,14 @@ function CreateTripPanel({ open, onClose, vehicles, drivers, onCreate }) {
       title="Create Trip"
       footer={
         <>
-          <button className="ff-btn ff-btn-ghost h-10 px-4" onClick={onClose}>Cancel</button>
-          <button className="ff-btn ff-btn-primary h-10 px-4" onClick={submit} style={{ opacity: canSubmit ? 1 : 0.65 }}>
+          <button className="ff-btn ff-btn-ghost h-11 px-5" onClick={onClose}>Cancel</button>
+          <button className="ff-btn ff-btn-primary h-11 px-5" onClick={submit} style={{ opacity: canSubmit ? 1 : 0.65 }}>
             Create Trip
           </button>
         </>
       }
     >
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div className="ff-label">Step 1 — Select Vehicle</div>
         <FormSelect value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
           {availableVehicles.map(v => (
@@ -237,12 +237,12 @@ function CreateTripPanel({ open, onClose, vehicles, drivers, onCreate }) {
           />
         )}
 
-        <div className="ff-card p-4" style={{ borderRadius: 16 }}>
+        <div className="ff-card p-5" style={{ borderRadius: 16 }}>
           <div className="ff-label">Dispatch Preview</div>
-          <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="mt-3 flex items-center justify-between gap-3">
             <div>
               <div className="text-[13px] font-bold text-slate-100">{origin || 'Origin'} <span className="text-slate-500">→</span> {destination || 'Destination'}</div>
-              <div className="text-[12px] text-slate-400">{v?.name ?? 'Vehicle'} · {eligibleDrivers.find(d => d.id === Number(driverId))?.name ?? 'Driver'}</div>
+              <div className="text-[12px] text-slate-400" style={{ marginTop: 3 }}>{v?.name ?? 'Vehicle'} · {eligibleDrivers.find(d => d.id === Number(driverId))?.name ?? 'Driver'}</div>
             </div>
             <StatusPill status="dispatched" />
           </div>

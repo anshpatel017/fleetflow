@@ -1,18 +1,29 @@
 import React from 'react';
+import { Inbox } from 'lucide-react';
 
-export default function EmptyState({ icon: Icon, title = 'Nothing here yet', message, ctaLabel, onCta }) {
+export default function EmptyState({ icon: Icon = Inbox, title = 'No Data', message = 'Nothing to show here yet.', cta, onCta }) {
   return (
-    <div className="ff-card px-6 py-10 text-center">
-      {Icon && (
-        <div className="mx-auto mb-3 w-12 h-12 rounded-2xl grid place-items-center" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)' }}>
-          <Icon size={20} className="text-indigo-400" />
-        </div>
-      )}
-      <h3 className="text-[14px] font-bold text-slate-100">{title}</h3>
-      {message && <p className="text-[13px] text-slate-400 mt-1 max-w-sm mx-auto">{message}</p>}
-      {ctaLabel && onCta && (
-        <button onClick={onCta} className="ff-btn ff-btn-primary mt-5 px-4 h-10">
-          {ctaLabel}
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '56px 24px', textAlign: 'center',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--surface2)', border: '1px solid var(--border)', marginBottom: 16,
+      }}>
+        <Icon size={24} style={{ color: 'var(--text-faint)' }} />
+      </div>
+      <h3 style={{
+        fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: 16, color: 'var(--text)',
+        margin: '0 0 6px',
+      }}>{title}</h3>
+      <p style={{
+        fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', margin: 0,
+        maxWidth: 260, lineHeight: 1.5,
+      }}>{message}</p>
+      {cta && (
+        <button className="ff-btn ff-btn-primary" onClick={onCta} style={{ marginTop: 18, fontSize: 13 }}>
+          {cta}
         </button>
       )}
     </div>

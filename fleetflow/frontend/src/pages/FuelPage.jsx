@@ -53,7 +53,7 @@ export default function FuelPage() {
         return (
           <div>
             <div className="text-[13px] font-bold text-slate-100">{v?.name ?? '—'}</div>
-            <div className="text-[12px] text-slate-400 ff-mono">{v?.plate ?? '—'}</div>
+            <div className="text-[12px] text-slate-400 ff-mono" style={{ marginTop: 3 }}>{v?.plate ?? '—'}</div>
           </div>
         );
       }
@@ -90,25 +90,25 @@ export default function FuelPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Fuel & Expenses</div>
-          <div className="text-[13px] text-slate-400">Track spend, liters, and efficiency trends.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Fuel & Expenses</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Track spend, liters, and efficiency trends.</div>
         </div>
-        <button className="ff-btn ff-btn-primary h-10 px-4" onClick={openAdd}>
+        <button className="ff-btn ff-btn-primary h-11 px-5" onClick={openAdd}>
           <Plus size={16} /> Add Fuel Log
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MiniStat label="Total Fuel Spend (This Month)" value={`₹${totals.totalSpend.toFixed(0)}`} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <MiniStat label="Total Fuel Spend (This Month)" value={`\u20b9${totals.totalSpend.toFixed(0)}`} />
         <MiniStat label="Total Liters" value={`${totals.totalLiters.toFixed(0)} L`} />
-        <MiniStat label="Avg Cost/L" value={`₹${avgCost.toFixed(2)}`} />
+        <MiniStat label="Avg Cost/L" value={`\u20b9${avgCost.toFixed(2)}`} />
         <MiniStat label="Best Efficiency Vehicle" value="Bike-02" />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <DataTable
           title={`Fuel Logs (${logs.length})`}
           columns={columns}
@@ -119,19 +119,19 @@ export default function FuelPage() {
           className="overflow-hidden"
         />
 
-        <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+        <div className="ff-card p-6" style={{ borderRadius: 16 }}>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[14px] font-bold text-slate-100">Efficiency Trend</div>
-              <div className="text-[12px] text-slate-400">km/L over last 6 months</div>
+              <div className="text-[15px] font-bold" style={{ color: '#F1F5F9' }}>Efficiency Trend</div>
+              <div className="text-[12px]" style={{ color: '#94A3B8', marginTop: 2 }}>km/L over last 6 months</div>
             </div>
-            <div className="inline-flex items-center gap-2 text-[12px] text-slate-400">
+            <div className="inline-flex items-center gap-2 text-[12px]" style={{ color: '#94A3B8' }}>
               <Fuel size={14} />
               Efficiency
             </div>
           </div>
 
-          <div className="mt-4" style={{ width: '100%', height: 280 }}>
+          <div className="mt-5" style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer>
               <LineChart data={efficiency}>
                 <CartesianGrid stroke="rgba(51,65,85,0.6)" vertical={false} />
@@ -180,9 +180,9 @@ export default function FuelPage() {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="ff-card ff-card-hover p-5" style={{ borderRadius: 16 }}>
-      <div className="ff-label">{label}</div>
-      <div className="mt-2 text-[20px] font-extrabold text-slate-100">{value}</div>
+    <div className="ff-card ff-card-hover p-6" style={{ borderRadius: 16 }}>
+      <div className="ff-label" style={{ lineHeight: 1.4 }}>{label}</div>
+      <div style={{ marginTop: 10, fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>{value}</div>
     </div>
   );
 }

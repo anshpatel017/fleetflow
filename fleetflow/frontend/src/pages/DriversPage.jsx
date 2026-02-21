@@ -28,8 +28,8 @@ function SafetyBar({ score }) {
   const s = Number(score) || 0;
   const color = s >= 80 ? '#22C55E' : s >= 50 ? '#F59E0B' : '#EF4444';
   return (
-    <div className="h-2 rounded-full" style={{ background: 'rgba(51,65,85,0.8)', overflow: 'hidden' }}>
-      <div className="h-full" style={{ width: `${Math.max(0, Math.min(100, s))}%`, background: color }} />
+    <div className="rounded-full" style={{ height: 6, background: 'rgba(51,65,85,0.8)', overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, s))}%`, background: color, borderRadius: 'inherit', transition: 'width 0.4s ease' }} />
     </div>
   );
 }
@@ -51,7 +51,7 @@ function SafetyGauge({ score }) {
       <div className="absolute inset-0 grid place-items-center">
         <div className="text-center">
           <div className="text-[22px] font-extrabold ff-mono" style={{ color: '#F1F5F9' }}>{s}</div>
-          <div className="text-[12px] text-slate-400 font-semibold">Safety</div>
+          <div className="text-[12px] text-slate-400 font-semibold" style={{ marginTop: 2 }}>Safety</div>
         </div>
       </div>
     </div>
@@ -89,13 +89,13 @@ function DriverDetailPanel({ open, driver, onClose }) {
         </>
       }
     >
-      <div className="space-y-5">
-        <div className="ff-card p-4" style={{ borderRadius: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="ff-card p-5" style={{ borderRadius: 16 }}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[16px] font-bold text-slate-100">{driver.name}</div>
-              <div className="text-[12px] text-slate-400 ff-mono mt-1">{driver.license}</div>
-              <div className="mt-2 flex items-center gap-2">
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#F1F5F9', fontFamily: 'var(--font-head)' }}>{driver.name}</div>
+              <div className="ff-mono" style={{ fontSize: 13, color: '#94A3B8', marginTop: 6 }}>{driver.license}</div>
+              <div style={{ marginTop: 10 }} className="flex items-center gap-2">
                 <span className="px-2 py-1 rounded-md text-[12px] font-semibold" style={{ background: 'rgba(14,165,233,0.10)', border: '1px solid rgba(14,165,233,0.25)', color: '#7DD3FC' }}>{driver.category}</span>
                 <ExpiryCell date={driver.expiry} />
                 <span className="text-[12px] text-slate-400 font-semibold">({days < 0 ? 'expired' : `${days} days left`})</span>
@@ -106,14 +106,14 @@ function DriverDetailPanel({ open, driver, onClose }) {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div style={{ marginTop: 20 }} className="flex items-center justify-between">
             <div>
-              <div className="ff-label">Status</div>
-              <div className="mt-1"><StatusPill status={driver.status} /></div>
+              <div className="ff-label" style={{ marginBottom: 8 }}>Status</div>
+              <StatusPill status={driver.status} />
             </div>
             <div className="text-right">
-              <div className="ff-label">Trips Completed</div>
-              <div className="mt-1 text-[14px] font-extrabold text-slate-100 ff-mono">{driver.trips}</div>
+              <div className="ff-label" style={{ marginBottom: 8 }}>Trips Completed</div>
+              <div className="text-[14px] font-extrabold text-slate-100 ff-mono">{driver.trips}</div>
             </div>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function DriversPage() {
     { id: 'name', header: 'Driver', accessor: 'name', cell: (v, r) => (
       <div>
         <div className="text-[13px] font-bold text-slate-100">{v}</div>
-        <div className="text-[12px] text-slate-400 ff-mono">{r.license}</div>
+        <div className="text-[12px] text-slate-400 ff-mono" style={{ marginTop: 3 }}>{r.license}</div>
       </div>
     ) },
     { id: 'cat', header: 'Category', accessor: 'category', cell: (v) => <span className="px-2 py-1 rounded-md text-[12px] font-semibold" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', color: '#C7D2FE' }}>{v}</span> },
@@ -166,13 +166,13 @@ export default function DriversPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Driver Profiles</div>
-          <div className="text-[13px] text-slate-400">License compliance and safety performance.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Driver Profiles</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>License compliance and safety performance.</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button className="ff-btn ff-btn-ghost h-10 px-4" onClick={() => setView('cards')} style={{ borderColor: view === 'cards' ? 'rgba(99,102,241,0.45)' : 'rgba(51,65,85,0.9)' }}>
             Cards
           </button>
@@ -183,44 +183,42 @@ export default function DriversPage() {
       </div>
 
       {view === 'cards' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-7" style={{ maxWidth: '100%' }}>
           {drivers.map((d) => (
-            <div key={d.id} className="ff-card ff-card-hover p-5" style={{ borderRadius: 16 }}>
+            <div key={d.id} className="ff-card ff-card-hover" style={{ borderRadius: 18, minWidth: 0, overflow: 'hidden', padding: '24px 28px 24px', border: '1.5px solid rgba(51,65,85,0.7)' }}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[14px] font-bold text-slate-100">{d.name}</div>
-                  <div className="text-[12px] text-slate-400 ff-mono">{d.license}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9', fontFamily: 'var(--font-head)' }}>{d.name}</div>
+                  <div className="ff-mono" style={{ fontSize: 12, color: '#94A3B8', marginTop: 6 }}>{d.license}</div>
                 </div>
                 <StatusPill status={d.status} />
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
+              <div style={{ marginTop: 24 }} className="flex items-center justify-between">
                 <div>
-                  <div className="ff-label">License</div>
-                  <div className="mt-1 flex items-center gap-2">
+                  <div className="ff-label" style={{ marginBottom: 8 }}>License</div>
+                  <div className="flex items-center gap-2">
                     <span className="px-2 py-1 rounded-md text-[12px] font-semibold" style={{ background: 'rgba(14,165,233,0.10)', border: '1px solid rgba(14,165,233,0.25)', color: '#7DD3FC' }}>{d.category}</span>
                     <ExpiryCell date={d.expiry} />
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="ff-label">Trips Completed</div>
-                  <div className="mt-1 text-[14px] font-bold text-slate-100 ff-mono">{d.trips}</div>
+                  <div className="ff-label" style={{ marginBottom: 8 }}>Trips Completed</div>
+                  <div className="ff-mono" style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9' }}>{d.trips}</div>
                 </div>
               </div>
 
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <div className="ff-label">Safety Score</div>
-                  <div className="text-[12px] font-bold text-slate-200 ff-mono">{d.safety}/100</div>
+              <div style={{ marginTop: 24 }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                  <div className="ff-label" style={{ marginBottom: 0 }}>Safety Score</div>
+                  <div className="ff-mono" style={{ fontSize: 13, fontWeight: 700, color: '#CBD5E1' }}>{d.safety}/100</div>
                 </div>
-                <div className="mt-2">
-                  <SafetyBar score={d.safety} />
-                </div>
+                <SafetyBar score={d.safety} />
               </div>
 
-              <div className="mt-4 flex items-center gap-2">
-                <button className="ff-btn ff-btn-ghost h-10 px-4 flex-1" onClick={() => setSelected(d)}>View Profile</button>
-                <button className="ff-btn ff-btn-primary h-10 px-4">Edit</button>
+              <div style={{ marginTop: 24 }} className="flex items-center gap-3">
+                <button className="ff-btn ff-btn-ghost h-11 flex-1" style={{ padding: '0 12px' }} onClick={() => setSelected(d)}>View Profile</button>
+                <button className="ff-btn ff-btn-primary h-11" style={{ padding: '0 20px', flexShrink: 0 }}>Edit</button>
               </div>
             </div>
           ))}

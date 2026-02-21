@@ -1,17 +1,12 @@
 import React from 'react';
 
-export default function LoadingSpinner({ size = 28, className = '' }) {
+export default function LoadingSpinner({ size = 20, color = 'var(--indigo)' }) {
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div
-        className="animate-spin rounded-full"
-        style={{
-          width: size,
-          height: size,
-          border: '3px solid rgba(99,102,241,0.25)',
-          borderTopColor: '#6366F1',
-        }}
-      />
+    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.8s linear infinite' }}>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="3" strokeLinecap="round" strokeDasharray="50 20" opacity="0.9" />
+      </svg>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

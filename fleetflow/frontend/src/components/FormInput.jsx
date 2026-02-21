@@ -1,28 +1,36 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
-export default function FormInput({ label, hint, error, rightAdornment, mono = false, className = '', inputClassName = '', ...props }) {
+export default function FormInput({ label, hint, error, rightAdornment, mono = false, className = '', labelClassName = '', inputClassName = '', ...props }) {
   const hasError = !!error;
-
   return (
     <div className={className}>
       {label && (
-        <div className="flex items-center justify-between mb-2">
-          <label className="ff-label">{label}</label>
-          {hint && <span className="text-[12px] text-slate-500">{hint}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <label className={labelClassName} style={{
+            fontFamily: 'var(--font-body)', fontSize: 11, fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)',
+          }}>{label}</label>
+          {hint && <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{hint}</span>}
         </div>
       )}
-      <div className="relative">
+      <div style={{ position: 'relative' }}>
         <input
-          className={`ff-input ${mono ? 'ff-mono' : ''} ${hasError ? 'ff-input-error' : ''} ${inputClassName}`}
+          className={`ff-input ${hasError ? 'ff-input-error' : ''} ${inputClassName}`}
+          style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)' }}
           {...props}
         />
         {rightAdornment && (
-          <div className="absolute inset-y-0 right-2 flex items-center">
+          <div style={{ position: 'absolute', inset: '0 8px 0 auto', display: 'flex', alignItems: 'center' }}>
             {rightAdornment}
           </div>
         )}
       </div>
-      {hasError && <div className="mt-2 text-[12px] font-medium text-red-400">{error}</div>}
+      {hasError && (
+        <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500, color: 'var(--danger)' }}>
+          <AlertTriangle size={12} /> {error}
+        </div>
+      )}
     </div>
   );
 }

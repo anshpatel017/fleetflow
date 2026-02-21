@@ -42,8 +42,8 @@ function VehicleModal({ open, initial, onClose, onSave }) {
       onClose={onClose}
       footer={
         <>
-          <button className="ff-btn ff-btn-ghost h-10 px-4" onClick={onClose}>Cancel</button>
-          <button className="ff-btn ff-btn-primary h-10 px-4" onClick={submit}>Save</button>
+          <button className="ff-btn ff-btn-ghost h-11 px-5" onClick={onClose}>Cancel</button>
+          <button className="ff-btn ff-btn-primary h-11 px-5" onClick={submit}>Save</button>
         </>
       }
     >
@@ -80,7 +80,7 @@ function VehicleModal({ open, initial, onClose, onSave }) {
           <div className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: 'rgba(38,53,72,0.65)', border: '1px solid rgba(51,65,85,0.75)' }}>
             <div className="min-w-0">
               <div className="text-[13px] font-bold text-slate-100">{v.name || '—'}</div>
-              <div className="text-[12px] text-slate-400 ff-mono">{v.plate || '—'}</div>
+              <div className="text-[12px] text-slate-400 ff-mono" style={{ marginTop: 3 }}>{v.plate || '—'}</div>
             </div>
             <div className="ml-auto"><StatusPill status={v.status} /></div>
           </div>
@@ -145,7 +145,7 @@ export default function VehiclesPage() {
       cell: (_v, r) => (
         <div style={{ opacity: r.retired ? 0.5 : 1 }}>
           <div className={`text-[13px] font-bold text-slate-100 ${r.retired ? 'line-through' : ''}`}>{r.name}</div>
-          <div className="text-[12px] text-slate-400 ff-mono">{r.plate}</div>
+          <div className="text-[12px] text-slate-400 ff-mono" style={{ marginTop: 3 }}>{r.plate}</div>
         </div>
       ),
     },
@@ -192,34 +192,35 @@ export default function VehiclesPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Vehicle Registry</div>
-          <div className="text-[13px] text-slate-400">Manage assets, capacity, and availability.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Vehicle Registry</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Manage assets, capacity, and availability.</div>
         </div>
-        <button className="ff-btn ff-btn-primary h-10 px-4" onClick={onAdd}>
+        <button className="ff-btn ff-btn-primary h-11 px-5" onClick={onAdd}>
           <Plus size={16} /> Add Vehicle
         </button>
       </div>
 
-      <div className="ff-card p-4" style={{ borderRadius: 16 }}>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input className="ff-input h-10" placeholder="Search name or plate" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select className="ff-input h-10" value={type} onChange={(e) => setType(e.target.value)}>
+      <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+        <div className="ff-label" style={{ marginBottom: 10 }}>Filters</div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input className="ff-input h-11" placeholder="Search name or plate" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <select className="ff-input h-11" value={type} onChange={(e) => setType(e.target.value)}>
             <option value="All">All types</option>
             <option value="Truck">Truck</option>
             <option value="Van">Van</option>
             <option value="Bike">Bike</option>
           </select>
-          <select className="ff-input h-10" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select className="ff-input h-11" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="All">All status</option>
             <option value="available">Available</option>
             <option value="on_trip">On Trip</option>
             <option value="in_shop">In Shop</option>
             <option value="retired">Retired</option>
           </select>
-          <select className="ff-input h-10" value={region} onChange={(e) => setRegion(e.target.value)}>
+          <select className="ff-input h-11" value={region} onChange={(e) => setRegion(e.target.value)}>
             {regions.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>

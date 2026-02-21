@@ -1,46 +1,42 @@
 import React from 'react';
 
-function getInitials(name) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return 'U';
-  const first = parts[0]?.[0] ?? 'U';
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
-  return (first + last).toUpperCase();
-}
+const SIZES = { sm: 28, md: 36, lg: 48, xl: 64 };
+const FONT_SIZES = { sm: 10, md: 12, lg: 16, xl: 22 };
+const DOT_SIZES = { sm: 7, md: 9, lg: 11, xl: 13 };
+const STATUS_COLORS = { online: '#10B981', offline: '#6B7280', busy: '#F59E0B', away: '#EF4444' };
 
-const DOT = {
-  available: '#22C55E',
-  on_trip: '#38BDF8',
-  in_shop: '#F59E0B',
-  retired: '#64748B',
-  on_duty: '#22C55E',
-  off_duty: '#94A3B8',
-  suspended: '#EF4444',
-};
-
-export default function AvatarBadge({ name, status, size = 36 }) {
-  const initials = getInitials(name);
-  const s = String(status || '').toLowerCase().replaceAll(' ', '_');
-  const dot = DOT[s] ?? '#94A3B8';
+export default function AvatarBadge({ name = '', size = 'md', status, src, style = {} }) {
+  const dim = SIZES[size] || SIZES.md;
+  const fs = FONT_SIZES[size] || FONT_SIZES.md;
+  const dotDim = DOT_SIZES[size] || DOT_SIZES.md;
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <div
-        className="grid place-items-center rounded-full ff-mono text-[12px] font-semibold"
-        style={{
-          width: size,
-          height: size,
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.35), rgba(14,165,233,0.25))',
-          border: '1px solid rgba(51,65,85,0.9)',
-          color: '#F1F5F9',
-        }}
-      >
-        {initials}
-      </div>
-      <span
-        className="absolute -bottom-0.5 -right-0.5 rounded-full"
-        style={{ width: 10, height: 10, background: dot, border: '2px solid #0F1117' }}
-      />
+    <div style={{ position: 'relative', width: dim, height: dim, flexShrink: 0, ...style }}>
+      {src ? (
+        <img src={src} alt={name} style={{
+          width: dim, height: dim, borderRadius: '50%', objectFit: 'cover',
+          border: '2px solid var(--border)',
+        }} />
+      ) : (
+        <div style={{
+          width: dim, height: dim, borderRadius: '50%', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          background: 'linear-gradient(135deg, #6366F1, #818CF8)',
+          color: '#fff', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: fs,
+          letterSpacing: '0.02em',
+        }}>
+          {initials}
+        </div>
+      )}
+      {status && (
+        <div style={{
+          position: 'absolute', bottom: 0, right: 0,
+          width: dotDim, height: dotDim, borderRadius: '50%',
+          background: STATUS_COLORS[status] || STATUS_COLORS.offline,
+          border: '2px solid var(--bg)',
+        }} />
+      )}
     </div>
   );
 }

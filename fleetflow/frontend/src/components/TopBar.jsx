@@ -1,57 +1,74 @@
-import React from 'react';
-import { Bell, Search } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell } from 'lucide-react';
 import AvatarBadge from './AvatarBadge';
-import useRoleStore from '../store/roleStore';
 
-const TITLES = {
-  '/dashboard': 'Command Center',
-  '/vehicles': 'Vehicle Registry',
-  '/trips': 'Trip Dispatcher',
-  '/drivers': 'Driver Profiles',
-  '/maintenance': 'Maintenance Logs',
-  '/fuel': 'Fuel & Expenses',
-  '/analytics': 'Analytics',
-};
+export default function TopBar({ title, userName = '' }) {
+  const [time, setTime] = useState(new Date());
 
-export default function TopBar() {
-  const location = useLocation();
-  const { role, roleLabel } = useRoleStore();
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
-  const title = TITLES[location.pathname] ?? 'FleetFlow';
+  const clock = time.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const dateStr = time.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <header
-      className="fixed left-0 right-0 top-0 h-[60px] z-40"
-      style={{ background: 'var(--ff-bg)', borderBottom: '1px solid var(--ff-border)' }}
-    >
-      <div className="h-full flex items-center justify-between px-8" style={{ marginLeft: 260 }}>
-        <div className="text-[18px] font-bold text-slate-100">{title}</div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative w-[320px] hidden md:block">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input className="ff-input pl-9 h-10" placeholder="Search vehicles, trips, drivers…" />
-          </div>
-
-          <button className="ff-btn ff-btn-ghost w-10 h-10 relative" aria-label="Notifications">
-            <Bell size={18} />
-            <span
-              className="absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              style={{ background: 'rgba(239,68,68,0.95)', color: 'white', lineHeight: 1 }}
-            >
-              3
-            </span>
-          </button>
-
-          <div className="flex items-center gap-3 pl-2 border-l" style={{ borderColor: 'rgba(51,65,85,0.9)' }}>
-            <AvatarBadge name="Alex Morgan" status={role === 'dispatcher' ? 'on_trip' : 'available'} size={34} />
-            <div className="hidden sm:block">
-              <div className="text-[13px] font-semibold text-slate-100 leading-tight">Alex Morgan</div>
-              <div className="text-[12px] text-slate-400 leading-tight">{roleLabel(role)}</div>
-            </div>
-          </div>
+    <header style={{
+      position: 'fixed', top: 0, left: 260, right: 0, height: 56,
+      background: 'var(--surface)', borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 32px', zIndex: 30,
+    }}>
+      {/* Left: title + clock */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <h1 style={{
+          fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 17,
+          color: 'var(--text)', margin: 0,
+        }}>
+          {title}
+        </h1>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-faint)',
+          background: 'var(--surface2)', border: '1px solid var(--border)',
+          borderRadius: 8, padding: '4px 10px',
+        }}>
+          {clock} · {dateStr}
         </div>
+      </div>
+
+      {/* Right: search + notifications + avatar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{
+            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+            color: 'var(--text-faint)',
+          }} />
+          <input
+            className="ff-input"
+            placeholder="Search..."
+            style={{
+              width: 240, height: 34, paddingLeft: 32, fontSize: 13,
+              borderRadius: 8,
+            }}
+          />
+        </div>
+
+        <button style={{
+          position: 'relative', background: 'none', border: '1px solid var(--border)',
+          borderRadius: 8, width: 34, height: 34, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          color: 'var(--text-muted)',
+        }}>
+          <Bell size={16} />
+          <span style={{
+            position: 'absolute', top: -3, right: -3, width: 8, height: 8,
+            borderRadius: '50%', background: 'var(--danger)',
+            border: '2px solid var(--surface)',
+          }} />
+        </button>
+
+        <AvatarBadge name={userName} size="sm" />
       </div>
     </header>
   );

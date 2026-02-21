@@ -13,6 +13,12 @@ import {
   Tooltip,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  RadialBarChart,
+  RadialBar,
 } from 'recharts';
 
 export default function AnalyticsPage() {
@@ -84,13 +90,13 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-[18px] font-bold text-slate-100">Analytics</div>
-          <div className="text-[13px] text-slate-400">Financial and operational insights across your fleet.</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22, color: '#F1F5F9', letterSpacing: '-0.02em' }}>Analytics</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: '#94A3B8', marginTop: 4 }}>Financial and operational insights across your fleet.</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button className="ff-btn ff-btn-ghost h-10 px-4">
             <Download size={16} /> Export CSV
           </button>
@@ -100,21 +106,22 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="ff-card p-4" style={{ borderRadius: 16 }}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <select className="ff-input h-10" value={range} onChange={(e) => setRange(e.target.value)}>
+      <div className="ff-card p-5" style={{ borderRadius: 16 }}>
+        <div className="ff-label" style={{ marginBottom: 10 }}>Filters</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <select className="ff-input h-11" value={range} onChange={(e) => setRange(e.target.value)}>
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
             <option value="12m">Last 12 months</option>
           </select>
-          <select className="ff-input h-10" value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+          <select className="ff-input h-11" value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
             <option value="All">All Vehicles</option>
             <option value="Truck-11">Truck-11</option>
             <option value="Van-05">Van-05</option>
             <option value="Bike-02">Bike-02</option>
           </select>
-          <select className="ff-input h-10" value={region} onChange={(e) => setRegion(e.target.value)}>
+          <select className="ff-input h-11" value={region} onChange={(e) => setRegion(e.target.value)}>
             <option value="All">All Regions</option>
             <option value="West">West</option>
             <option value="North">North</option>
@@ -122,7 +129,7 @@ export default function AnalyticsPage() {
             <option value="South">South</option>
           </select>
         </div>
-        <div className="mt-3 text-[12px] text-slate-500 font-semibold flex items-center gap-2">
+        <div style={{ marginTop: 10 }} className="text-[12px] text-slate-400 font-semibold flex items-center gap-2">
           <Calendar size={14} /> {range} · <Filter size={14} /> {vehicle}/{region}
         </div>
       </div>
@@ -137,53 +144,128 @@ export default function AnalyticsPage() {
         className="overflow-hidden"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="Fuel Efficiency per Vehicle" subtitle="km/L">
-          <ResponsiveContainer>
-            <BarChart data={efficiency} layout="vertical" margin={{ left: 18 }}>
-              <CartesianGrid stroke="rgba(51,65,85,0.6)" horizontal={false} />
-              <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="vehicle" tick={{ fill: '#CBD5E1', fontSize: 12 }} axisLine={false} tickLine={false} width={90} />
-              <Tooltip contentStyle={{ background: '#263548', border: '1px solid rgba(51,65,85,0.8)', borderRadius: 12 }} />
-              <Bar dataKey="kmpl" fill="#0EA5E9" radius={[0, 10, 10, 0]} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── Chart 1: Fuel Efficiency (horizontal bar with gradient) ── */}
+        <ChartCard title="Fuel Efficiency" subtitle="km / litre per vehicle">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={efficiency} layout="vertical" margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="fuelGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0.95} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="vehicle" tick={{ fill: '#CBD5E1', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} width={80} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+                cursor={{ fill: 'rgba(99,102,241,0.06)' }}
+              />
+              <Bar dataKey="kmpl" fill="url(#fuelGrad)" radius={[0, 8, 8, 0]} barSize={22} animationDuration={900} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Fleet Utilization Over Time" subtitle="% on-trip ratio">
-          <ResponsiveContainer>
-            <AreaChart data={utilization}>
-              <CartesianGrid stroke="rgba(51,65,85,0.6)" vertical={false} />
-              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#263548', border: '1px solid rgba(51,65,85,0.8)', borderRadius: 12 }} />
-              <Area type="monotone" dataKey="u" stroke="#6366F1" fill="#6366F1" fillOpacity={0.18} strokeWidth={2} />
+        {/* ── Chart 2: Fleet Utilization (gradient area) ── */}
+        <ChartCard title="Fleet Utilization" subtitle="Weekly on-trip ratio %">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={utilization} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="utilGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} domain={[50, 80]} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="u"
+                stroke="#8B5CF6"
+                fill="url(#utilGrad)"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#8B5CF6', stroke: '#1E293B', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#A78BFA', stroke: '#1E293B', strokeWidth: 2 }}
+                animationDuration={900}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Cost Breakdown per Vehicle" subtitle="Fuel vs Maintenance (₹ lakh)">
-          <ResponsiveContainer>
-            <BarChart data={costBreakdown}>
-              <CartesianGrid stroke="rgba(51,65,85,0.6)" vertical={false} />
-              <XAxis dataKey="vehicle" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#263548', border: '1px solid rgba(51,65,85,0.8)', borderRadius: 12 }} />
-              <Bar dataKey="fuel" stackId="a" fill="#38BDF8" radius={[10, 10, 0, 0]} />
-              <Bar dataKey="maintenance" stackId="a" fill="#F59E0B" radius={[10, 10, 0, 0]} />
+        {/* ── Chart 3: Cost Breakdown (stacked bar, dual color) ── */}
+        <ChartCard title="Cost Breakdown" subtitle="Fuel vs Maintenance (₹ lakh)">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={costBreakdown} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="fuelCostGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.7} />
+                </linearGradient>
+                <linearGradient id="maintCostGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#FBBF24" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.7} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="vehicle" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+                cursor={{ fill: 'rgba(56,189,248,0.06)' }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ paddingBottom: 8, fontSize: 11, color: '#94A3B8' }}
+              />
+              <Bar dataKey="fuel" name="Fuel" stackId="costs" fill="url(#fuelCostGrad)" radius={[0, 0, 0, 0]} barSize={28} animationDuration={900} />
+              <Bar dataKey="maintenance" name="Maintenance" stackId="costs" fill="url(#maintCostGrad)" radius={[6, 6, 0, 0]} barSize={28} animationDuration={900} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Trip Volume Over Time" subtitle="Trips">
-          <ResponsiveContainer>
-            <LineChart data={tripVolume}>
-              <CartesianGrid stroke="rgba(51,65,85,0.6)" vertical={false} />
-              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#263548', border: '1px solid rgba(51,65,85,0.8)', borderRadius: 12 }} />
-              <Line type="monotone" dataKey="trips" stroke="#22C55E" strokeWidth={2} dot={false} />
-            </LineChart>
+        {/* ── Chart 4: Trip Volume (line + fill) ── */}
+        <ChartCard title="Trip Volume" subtitle="Weekly trip count">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={tripVolume} margin={{ top: 8, right: 24, bottom: 4, left: 4 }}>
+              <defs>
+                <linearGradient id="tripGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22C55E" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#22C55E" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(51,65,85,0.35)" vertical={false} />
+              <XAxis dataKey="t" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} domain={[10, 35]} />
+              <Tooltip
+                contentStyle={{ background: '#1E293B', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                labelStyle={{ color: '#F1F5F9', fontWeight: 600, marginBottom: 4 }}
+                itemStyle={{ color: '#94A3B8' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="trips"
+                stroke="#22C55E"
+                fill="url(#tripGrad)"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#22C55E', stroke: '#1E293B', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#4ADE80', stroke: '#1E293B', strokeWidth: 2 }}
+                animationDuration={900}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
@@ -193,14 +275,12 @@ export default function AnalyticsPage() {
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="ff-card p-5" style={{ borderRadius: 16 }}>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-[14px] font-bold text-slate-100">{title}</div>
-          <div className="text-[12px] text-slate-400">{subtitle}</div>
-        </div>
+    <div className="ff-card" style={{ borderRadius: 16, padding: '20px 24px 24px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: '#F1F5F9', letterSpacing: '-0.01em' }}>{title}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#64748B', marginTop: 3 }}>{subtitle}</div>
       </div>
-      <div className="mt-4" style={{ width: '100%', height: 260 }}>
+      <div style={{ flex: 1, width: '100%', minHeight: 260 }}>
         {children}
       </div>
     </div>
